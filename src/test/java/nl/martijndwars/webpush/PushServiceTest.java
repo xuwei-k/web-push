@@ -23,8 +23,6 @@ public class PushServiceTest {
 
     @Test
     public void testPushChrome() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, IOException, ExecutionException, InterruptedException {
-        Security.addProvider(new BouncyCastleProvider());
-
         String gcmApiKey = "AIzaSyDSa2bw0b0UGOmkZRw-dqHGQRI_JqpiHug";
         String endpoint = "https://android.googleapis.com/gcm/send/fXYSGjgKDKA:APA91bE-sqRL3us1BfdzaF0E3DKh8fwVgEFEyT7BaUH7d6j-UauS_4cSRvhrdsbYFM4-6CWLfndYLU-FBqrlX_8xa793fSVUZxzHFz7Yec_cbtM-8J0NqKF0dUjh0mVBYWAwkWZYkmRU";
         String encodedUserPublicKey = "BB5bKjcRawntzacxKXRVMhfS60h_48ZVHWZDTEbrVufrtwsol4dMNxKvGw8HSpd770MkWi76ovbBj_mJBiLQ1SA=";
@@ -40,7 +38,9 @@ public class PushServiceTest {
             "{\"title\": \"Hello\", \"message\": \"World\"}".getBytes()
         );
 
-        PushService pushService = new PushService(gcmApiKey);
+        PushService pushService = new PushService();
+        pushService.setGcmApiKey(gcmApiKey);
+
         Future<Content> httpResponse = pushService.send(notification);
 
         System.out.println(httpResponse.get().asString());
@@ -48,8 +48,6 @@ public class PushServiceTest {
 
     @Test
     public void testPushFirefox() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, IOException, ExecutionException, InterruptedException {
-        Security.addProvider(new BouncyCastleProvider());
-
         String endpoint = "https://updates.push.services.mozilla.com/push/v1/gAAAAABXS0Nhothwqf0Je2mmjuRgyXjgVylY0yZ4qmP3cglrFoneY-XOLdJuGZOsv5Eh7ndhe8mMvge3VcLhpgbQ3w6_vWK7FZkSXhzjlaIxikL6cbW6Gok5BVw1tL1jqruy5Y-deSoz";
         String encodedUserPublicKey = "BNP6uzB5yqQDltCnO1snr-Qx3wLUPgeznuUQjfFbmehRHJK3s4eaqy04nOnm9796mceidVJPlFaobd94yjwtmpU=";
 

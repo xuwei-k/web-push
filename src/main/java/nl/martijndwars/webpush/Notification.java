@@ -1,5 +1,7 @@
 package nl.martijndwars.webpush;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.PublicKey;
 
 public class Notification {
@@ -56,11 +58,21 @@ public class Notification {
         return payload;
     }
 
+    public boolean hasPayload() {
+        return getPayload().length > 0;
+    }
+
     public int getTTL() {
         return ttl;
     }
 
     public int getPadSize() {
         return 1;
+    }
+
+    public String getOrigin() throws MalformedURLException {
+        URL url = new URL(getEndpoint());
+
+        return url.getProtocol() + "://" + url.getHost();
     }
 }
