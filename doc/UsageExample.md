@@ -307,9 +307,9 @@ Shortly after this code is run, the message should be delivered to the user.
 Congratulations, you have just implemented push notifications in a progressive
 way!
 
-   Yay!
-  /
-\o/
- |
-/ \
+       Yay!
+      /
+    \o/
+     |
+    / \
 
