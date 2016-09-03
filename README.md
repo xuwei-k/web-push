@@ -22,21 +22,8 @@ For Maven, add the following dependency to `pom.xml`:
 
 ## Usage
 
-The server should have stored a subscription containing the `userPublicKey` and `userAuth` keys. Use these keys to create a `Notification` or `GcmNotification`, depending on whether the subscription is for Google Cloud Messaging.
-
-```java
-// Create a notification with the endpoint, userPublicKey from the subscription and a custom payload
-Notification notification = new Notification(endpoint, userPublicKey, userAuth, payload, ttl);
-
-// Or create a GcmNotification, in case of Google Cloud Messaging
-Notification notification = new GcmNotification(endpointi, userPublicKey, userAuth, payload);
-
-// Instantiate the push service with a GCM API key
-PushService pushService = new PushService("gcm-api-key");
-
-// Send the notification
-pushService.send(notification);
-```
+See [doc/UsageExample.md](https://github.com/MartijnDwars/web-push/blob/master/doc/UsageExample.md)
+for detailed usage instructions.
 
 ## Credit
 
