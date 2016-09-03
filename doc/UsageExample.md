@@ -19,10 +19,11 @@ browser, our server, and the browser manufacturer's push server.
     a Mozilla server, in Chrome's case, this would be a Google server. After
     this is done, a unique endpoint URL is sent to the browser, and the browser
     generates a public and private key pair which is stored internally in the
-    browser. The browser then makes the endpoint URL, the public key and a user
-    authentication secret.
+    browser. The browser then makes a  public key and a user authentication 
+    secret used by your server to E2E encrypt messages to the user's browser.
  2. The browser sends the public key, authentication secret and endpoint URL to
-    the server, and the server stores this somehow.
+    your server, and the server stores this somehow (in a database, in memory,
+    a file, whatever). 
  3. When the time comes that the server wishes to send a push message, it
     retrieves the stored information on the push message subscription and
     creates an encrypted message with the public key and user authentication.
@@ -34,8 +35,8 @@ browser, our server, and the browser manufacturer's push server.
 
 # Example of library usage
 
-This needs to happen in three stages. First, we need to set up
-a [serviceworker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
+This needs to happen in three stages. First, we need to set up a
+[serviceworker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
 in the user agent (browser), register it for push notifications, and send the
 nececcary information to our server. This needs to be done in a service worker,
 because service workers run in the background, even when the website is closed
@@ -46,13 +47,28 @@ Next, we need to parse the input sent to the server. And then finally we can use
 this library to send encrypted notifications. This section shows a basic example
 on how to do these three steps.
 
-## Client side serviceworker
+## Client side
+
+This example uses plain javascript to create a service worker and subcribe to
+push notifications. This is done in a progressive way, so that the subscription
+will only be done if the user agent supports it. If the user agent does not
+support any of the required APIs (
+[pushManager](https://developer.mozilla.org/en-US/docs/Web/API/PushManager), 
+[serviceworker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
+ and [notifications](https://developer.mozilla.org/en-US/docs/Web/API/notification/Notification)
+), then an error will be logged, but no breakage will occur. Thus users of
+modern browsers can enjoy modern features, while users forced to use older
+browsers will not be experiencing any broken features.
+
+Note that we here assume you have set up a `sw.js` file with some handling of
+the push messages you will receive. For an example on how to do so, see
+[this page](https://github.com/gauntface/simple-push-demo/blob/master/src/service-worker.js).
 
 ```javascript
 
 /**
  * Step one: run a function on load (or whenever is appropriate for you)
- * Function run on load - Sets up the service worker if it is supported in the
+ * Function run on load sets up the service worker if it is supported in the
  * browser. Requires a serviceworker in a `sw.js`. This file contains what will
  * happen when we receive a push notification.
  * If you are using webpack, see the section below.
@@ -78,6 +94,10 @@ function initialiseState() {
     }
 
     // Check if user has disabled notifications
+    // If a user has manually disabled notifications in his/her browser for 
+    // your page previously, they will need to MANUALLY go in and turn the
+    // permission back on. In this statement you could show some UI element 
+    // telling the user how to do so.
     if (Notification.permission === 'denied') {
         console.warn('The user has blocked notifications.');
         return;
@@ -169,6 +189,21 @@ function sendSubscriptionToServer(subscription) {
 }
 ```
 
+After this code has been run successfully, the following JSON will be POSTed to
+your server:
+
+```
+{
+  "endpoint": "https://push.server.mozilla.org/unique-endpoint",
+  "key": "TmljZSB0cnksIG5vIGtleSBmb3IgeW91IQ==",
+  "auth": "Tm8hIEJhZCBoYWNrZXIh"
+}
+```
+
+ - endpoint: The browser provider's push server endpoint.
+ - key: The Base64 encoded public key of the browser's push subscription used to encrypt messages.
+ - auth: A Base63 encoded authentication secret that used in authentication of messages.
+
 ### Webpack
 
 If you are using webpack, you will probably want to do things a bit differently.
@@ -182,7 +217,7 @@ var registerServiceWorker = require('serviceworker!./sw.js');
 registerServiceWorker({ scope: '/' }).then(initialiseState);
 ```
 
-## Parse the input
+## Serverside - Parse the input
 
 Okay! Finally we are back in java-land. Now, assuming we have set up an endpoint
 which accepts POST requests, we can create a subscription object from the input
@@ -254,13 +289,13 @@ public Subscription() {
 ```
 
 Now we need to take this `Subscription` object and save it somewhere so that we
-can use it later, when we need to send push notifications.
+can use it later when we need to send push notifications.
 
-## Send push messages
+## Serverside - Send push messages
 
 Now that we need to send push notifications, we cah finally use this library!
 Woho! First, we need to decide if we want to send a Google Cloud Messaging (GCM)
-message, or a Push API message.
+message, or a Push API message. How this is done is up to you.
 
 ```java
 /** The Time to live of GCM notifications */
