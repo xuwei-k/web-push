@@ -22,12 +22,18 @@ For Maven, add the following dependency to `pom.xml`:
 
 ### VAPID
 
-Usage of VAPID is optional, but when used you should:
+[VAPID](https://datatracker.ietf.org/doc/draft-thomson-webpush-vapid/) allows a server to identify itself to a push
+service. Using VAPID is not required, but it will be used for upcoming features such as
+[Mozilla's Push Dashboard](https://blog.mozilla.org/services/2016/04/04/using-vapid-with-webpush/).
 
-1. Generate a private key. This can be done using `openssl ecparam -name prime256v1 -genkey -noout -out vapid_private.pem`
-2. Generate a public key. This can be done using `openssl ec -in vapid_private.pem -pubout -out vapid_public.pem`
+VAPID relies on asymmetric elliptic curve cryptography. You will need to create a keypair on your server. This can be
+done with OpenSSL:
 
-You can view the keys using `openssl ec -in vapid_private.pem -text -noout -conv_form uncompressed`. This outputs something similar to:
+1. Generate a private key using `openssl ecparam -name prime256v1 -genkey -noout -out vapid_private.pem`.
+2. Generate the corresponding public key using `openssl ec -in vapid_private.pem -pubout -out vapid_public.pem`.
+
+You can view the public and private key using `openssl ec -in vapid_private.pem -text -noout -conv_form uncompressed`.
+The output should look similar to:
 
 ```
 read EC key
@@ -45,7 +51,9 @@ pub:
 ASN1 OID: prime256v1
 ```
 
-You need to use the public key in the `applicationServerKey` option when calling the `subscribe` method. For the above output, this can be done using:
+At the client side you need to use the public key when creating the subscription. This is done by specifying the
+`applicationServerKey` on the option object that is passed to the `subscribe` method. The public key should use
+uncompressed encoding and be formatted as base64. For example, for the above public key this looks like:
 
 ```javascript
 const publicKey = new Uint8Array([0x04,0xe1,0xfc,0x9d,0x34,0x00,0xe6,0x26,0x61,0x97,0x6d,0xfe,0x34,0x2c,0xc6,0x1b,0xda,0x6b,0xbc,0xe6,0x79,0x04,0x4d,0x0c,0x25,0x70,0x56,0xf8,0x65,0x24,0x40,0x8b,0xd1,0x55,0x35,0x41,0xdf,0x62,0x71,0x99,0x7d,0x15,0xd6,0x3e,0xb3,0xd2,0xbe,0xeb,0x9d,0x3e,0xfe,0x6e,0x08,0xba,0x7f,0x68,0x39,0x7c,0xc3,0xe9,0x02,0x1e,0x5b,0xae,0xa3]);
@@ -61,7 +69,8 @@ navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
 });
 ```
 
-You should also specify the private and public key in the Java library as base64 encoded strings. Again, for the preceding keys, you can use node to compute them:
+At the server side you need to specify both the private and public key as base64 encoded strings. The easiest way to
+compute the base64 encoding is by using nodejs and using the following commands:
 
 ```javascript
 var publicKey = new Buffer([0x04,0xe1,0xfc,0x9d,0x34,0x00,0xe6,0x26,0x61,0x97,0x6d,0xfe,0x34,0x2c,0xc6,0x1b,0xda,0x6b,0xbc,0xe6,0x79,0x04,0x4d,0x0c,0x25,0x70,0x56,0xf8,0x65,0x24,0x40,0x8b,0xd1,0x55,0x35,0x41,0xdf,0x62,0x71,0x99,0x7d,0x15,0xd6,0x3e,0xb3,0xd2,0xbe,0xeb,0x9d,0x3e,0xfe,0x6e,0x08,0xba,0x7f,0x68,0x39,0x7c,0xc3,0xe9,0x02,0x1e,0x5b,0xae,0xa3]);

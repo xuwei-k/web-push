@@ -3,6 +3,9 @@ package nl.martijndwars.webpush;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwt.JwtClaims;
 import org.json.JSONObject;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -19,11 +22,11 @@ public class PushServiceTest {
 
     @Test
     public void testPushFirefoxVapid() throws Exception {
-        String endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX1XArWkICQ5ZkxJ13aYHBnlgCNYXGBlyaC_GDCm8SZwi_19Rm4c44gBD4YL8Dw3OwOVIol7LL-h8-lkMWzjXmJXmGE7fWjQ6udP3kLZLHAfv7Usd_HxftFTtzRN-VRV6Zl89h";
+        String endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX1ZgBNvDz6ZIAh6OqNh3hN4ZLEa57oS22mHI70mnvrDbIi-MnJu7FxFzvMV31L_AnIxP_p1Ot47KP8Xmit3XIQjZDjTahqBPmmntWX8JM6AtRxcAHxmXH6KqhyWwL1QEA0jBp";
 
         // Base64 string user public key/auth
-        String encodedUserPublicKey = "BMvxJXX5zYeikss3eG7B3JE/KDIBJbCWI5QZDvQqBDzBUYyZf4lxWwwjM7ekF+DnbZ+UNQN9w3ccgLsEbrxz8hI=";
-        String encodedUserAuth = "KM+OrA7hnlz4UX98YGfheg==";
+        String encodedUserPublicKey = "BLLgHYo0xlN3GDSrz4g6SpTDLvJv+oFR0FSLLnncXFojvVyoOePpNXaUpsj4s/huAX7zb+qS1Lxo6qNLXNgWN7k=";
+        String encodedUserAuth = "wkbtrbgITbb9qPBVOw3ftw==";
 
         // Base64 string server public/private key
         String vapidPublicKey = "BOH8nTQA5iZhl23+NCzGG9prvOZ5BE0MJXBW+GUkQIvRVTVB32JxmX0V1j6z0r7rnT7+bgi6f2g5fMPpAh5brqM=";
@@ -150,6 +153,23 @@ public class PushServiceTest {
 
         System.out.println(httpResponse.getStatusLine().getStatusCode());
         System.out.println(IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void testSign() throws Exception {
+        // Base64 string server public/private key
+        String vapidPublicKey = "BOH8nTQA5iZhl23+NCzGG9prvOZ5BE0MJXBW+GUkQIvRVTVB32JxmX0V1j6z0r7rnT7+bgi6f2g5fMPpAh5brqM=";
+        String vapidPrivateKey = "TRlY/7yQzvqcLpgHQTxiU5fVzAAvAw/cdSh5kLFLNqg=";
+
+        JwtClaims claims = new JwtClaims();
+        claims.setAudience("https://developer.services.mozilla.com/a476b8ea-c4b8-4359-832a-e2747b6ab88a");
+
+        JsonWebSignature jws = new JsonWebSignature();
+        jws.setPayload(claims.toJson());
+        jws.setKey(Utils.loadPrivateKey(vapidPrivateKey));
+        jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
+
+        System.out.println(jws.getCompactSerialization());
     }
 
     /**
