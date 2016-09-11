@@ -37,12 +37,7 @@ public class PushServiceTest {
         byte[] userAuth = Utils.base64Decode(encodedUserAuth);
 
         // Construct notification
-        Notification notification = new Notification(
-            endpoint,
-            userPublicKey,
-            userAuth,
-            getPayload()
-        );
+        Notification notification = new Notification(endpoint, userPublicKey, userAuth, getPayload());
 
         // Construct push service
         PushService pushService = new PushService();
@@ -74,12 +69,7 @@ public class PushServiceTest {
         byte[] userAuth = Utils.base64Decode(encodedUserAuth);
 
         // Construct notification
-        Notification notification = new Notification(
-            endpoint,
-            userPublicKey,
-            userAuth,
-            getPayload()
-        );
+        Notification notification = new Notification(endpoint, userPublicKey, userAuth, getPayload());
 
         // Construct push service
         PushService pushService = new PushService();
@@ -107,12 +97,7 @@ public class PushServiceTest {
         byte[] userAuth = Utils.base64Decode(encodedUserAuth);
 
         // Construct notification
-        Notification notification = new Notification(
-            endpoint,
-            userPublicKey,
-            userAuth,
-            getPayload()
-        );
+        Notification notification = new Notification(endpoint, userPublicKey, userAuth, getPayload());
 
         // Construct push service
         PushService pushService = new PushService();
@@ -137,12 +122,7 @@ public class PushServiceTest {
         byte[] userAuth = Utils.base64Decode(encodedUserAuth);
 
         // Construct notification
-        Notification notification = new Notification(
-            endpoint,
-            userPublicKey,
-            userAuth,
-            getPayload()
-        );
+        Notification notification = new Notification(endpoint, userPublicKey, userAuth, getPayload());
 
         // Construct push service
         PushService pushService = new PushService();
