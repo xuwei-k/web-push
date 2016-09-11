@@ -69,15 +69,8 @@ public class HttpEce {
             secret = hkdfExpand(secret, authSecret, buildInfo("auth", new byte[0]), 32);
         }
 
-        if (padSize == 2) {
-            keyinfo = buildInfo("aesgcm", context);
-            nonceinfo = buildInfo("nonce", context);
-        } else if (padSize == 1) {
-            keyinfo = "Content-Encoding: aesgcm128".getBytes();
-            nonceinfo = "Content-Encoding: nonce".getBytes();
-        } else {
-            throw new IllegalArgumentException("Unable to set context for padSize " + padSize);
-        }
+        keyinfo = buildInfo("aesgcm", context);
+        nonceinfo = buildInfo("nonce", context);
 
         byte[] hkdf_key = hkdfExpand(secret, salt, keyinfo, 16);
         byte[] hkdf_nonce = hkdfExpand(secret, salt, nonceinfo, 12);
@@ -148,10 +141,9 @@ public class HttpEce {
      * Utility to concat byte arrays
      */
     private byte[] concat(byte[]... arrays) {
-        int combinedLength = Arrays.stream(arrays).mapToInt(array -> array.length).sum();
         int lastPos = 0;
 
-        byte[] combined = new byte[combinedLength];
+        byte[] combined = new byte[combinedLength(arrays)];
 
         for (byte[] array : arrays) {
             System.arraycopy(array, 0, combined, lastPos, array.length);
@@ -160,6 +152,19 @@ public class HttpEce {
         }
 
         return combined;
+    }
+
+    /**
+     * Compute combined array length
+     */
+    private int combinedLength(byte[]... arrays) {
+        int combinedLength = 0;
+
+        for (byte[] array : arrays) {
+            combinedLength += array.length;
+        }
+
+        return combinedLength;
     }
 
     public byte[] encrypt(byte[] buffer, byte[] salt, byte[] key, String keyid, PublicKey dh, byte[] authSecret, int padSize) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchProviderException, IOException {

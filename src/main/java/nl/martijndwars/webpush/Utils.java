@@ -4,6 +4,7 @@ import com.google.common.io.BaseEncoding;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
@@ -24,14 +25,32 @@ public class Utils {
     }
 
     /**
-     * Load the public key from a URL-safe base64 encoded string
+     * Base64-decode a string. Works for both url-safe and non-url-safe
+     * encodings.
+     *
+     * @param base64Encoded
+     * @return
+     */
+    public static byte[] base64Decode(String base64Encoded) {
+        if (base64Encoded.contains("+") || base64Encoded.contains("/")) {
+            return BaseEncoding.base64().decode(base64Encoded);
+        } else {
+            return BaseEncoding.base64Url().decode(base64Encoded);
+        }
+    }
+
+    /**
+     * Load the public key from a URL-safe base64 encoded string. Takes into
+     * account the different encodings, including point compression.
      *
      * @param encodedPublicKey
      */
     public static PublicKey loadPublicKey(String encodedPublicKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] decodedPublicKey = BaseEncoding.base64Url().decode(encodedPublicKey);
+        byte[] decodedPublicKey = base64Decode(encodedPublicKey);
 
-        KeyFactory kf = KeyFactory.getInstance("ECDH", "BC");
+        KeyFactory kf = KeyFactory.getInstance("ECDH", BouncyCastleProvider.PROVIDER_NAME);
+
+        // prime256v1 is NIST P-256
         ECNamedCurveParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("prime256v1");
         ECPoint point = ecSpec.getCurve().decodePoint(decodedPublicKey);
         ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecSpec);
@@ -49,11 +68,12 @@ public class Utils {
      * @throws InvalidKeySpecException
      */
     public static PrivateKey loadPrivateKey(String encodedPrivateKey) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] decodedPrivateKey = BaseEncoding.base64Url().decode(encodedPrivateKey);
+        byte[] decodedPrivateKey = base64Decode(encodedPrivateKey);
 
-        ECParameterSpec params = ECNamedCurveTable.getParameterSpec("prime192v1");
+        // prime256v1 is NIST P-256
+        ECParameterSpec params = ECNamedCurveTable.getParameterSpec("prime256v1");
         ECPrivateKeySpec prvkey = new ECPrivateKeySpec(new BigInteger(decodedPrivateKey), params);
-        KeyFactory kf = KeyFactory.getInstance("ECDH", "BC");
+        KeyFactory kf = KeyFactory.getInstance("ECDH", BouncyCastleProvider.PROVIDER_NAME);
 
         return kf.generatePrivate(prvkey);
     }

@@ -1,20 +1,19 @@
 package nl.martijndwars.webpush;
 
 import com.google.common.io.BaseEncoding;
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.impl.DefaultJwsHeader;
-import org.apache.http.client.fluent.Async;
-import org.apache.http.client.fluent.Content;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.entity.ContentType;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
-import org.json.JSONObject;
+import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.lang.JoseException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -22,15 +21,9 @@ import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class PushService {
-    private ExecutorService threadpool = Executors.newFixedThreadPool(1);
-
     /**
      * The Google Cloud Messaging API key (for pre-VAPID in Chrome)
      */
@@ -44,12 +37,12 @@ public class PushService {
     /**
      * The public key (for VAPID)
      */
-    private byte[] publicKey;
+    private PublicKey publicKey;
 
     /**
      * The private key (for VAPID)
      */
-    private byte[] privateKey;
+    private Key privateKey;
 
     /**
      * Encrypt the payload using the user's public key using Elliptic Curve
@@ -87,7 +80,7 @@ public class PushService {
     /**
      * Send a notification
      */
-    public Future<Content> send(Notification notification) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, NoSuchProviderException, InvalidAlgorithmParameterException, IOException, InvalidKeySpecException {
+    public HttpResponse send(Notification notification) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, NoSuchProviderException, InvalidAlgorithmParameterException, IOException, InvalidKeySpecException, JoseException {
         BaseEncoding base64url = BaseEncoding.base64Url();
 
         Encrypted encrypted = encrypt(
@@ -100,22 +93,23 @@ public class PushService {
         byte[] dh = Utils.savePublicKey((ECPublicKey) encrypted.getPublicKey());
         byte[] salt = encrypted.getSalt();
 
-        Request request = Request
-            .Post(notification.getEndpoint())
-            .addHeader("TTL", String.valueOf(notification.getTTL()));
+        HttpClient httpClient = HttpClients.createDefault();
+
+        HttpPost httpPost = new HttpPost(notification.getEndpoint());
+        httpPost.addHeader("TTL", String.valueOf(notification.getTTL()));
 
         Map<String, String> headers = new HashMap<>();
 
         if (notification.hasPayload()) {
             headers.put("Content-Type", "application/octet-stream");
-            headers.put("Content-Encoding", "aesgcm128");
+            headers.put("Content-Encoding", "aesgcm");
             headers.put("Encryption", "keyid=p256dh;salt=" + base64url.omitPadding().encode(salt));
             headers.put("Crypto-Key", "keyid=p256dh;dh=" + base64url.encode(dh));
 
-            request.bodyByteArray(encrypted.getCiphertext());
+            httpPost.setEntity(new ByteArrayEntity(encrypted.getCiphertext()));
         }
 
-        if (notification instanceof GcmNotification) {
+        if (notification.isGcm()) {
             if (gcmApiKey == null) {
                 throw new IllegalStateException("An GCM API key is needed to send a push notification to a GCM endpint.");
             }
@@ -123,36 +117,35 @@ public class PushService {
             headers.put("Authorization", "key=" + gcmApiKey);
         }
 
-        if (vapidEnabled() && !(notification instanceof GcmNotification)) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(new Date());
-            calendar.add(Calendar.HOUR, 12);
+        if (vapidEnabled() && !notification.isGcm()) {
+            JwtClaims claims = new JwtClaims();
+            claims.setAudience(notification.getOrigin());
+            claims.setExpirationTimeMinutesInTheFuture(12*60);
+            claims.setSubject(subject);
 
-            String compactJws = Jwts.builder()
-                .setHeaderParam("typ", "JWT")
-                .setHeaderParam("alg", "ES256")
-                .setAudience(notification.getOrigin())
-                .setExpiration(calendar.getTime())
-                .setSubject(subject)
-                .signWith(SignatureAlgorithm.ES256, privateKey)
-                .compact();
+            JsonWebSignature jws = new JsonWebSignature();
+            jws.setHeader("typ", "JWT");
+            jws.setHeader("alg", "ES256");
+            jws.setPayload(claims.toJson());
+            jws.setKey(privateKey);
+            jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
 
-            headers.put("Authorization", "Bearer " + compactJws);
+            headers.put("Authorization", "Bearer " + jws.getCompactSerialization());
+
+            byte[] pk = Utils.savePublicKey((ECPublicKey) publicKey);
 
             if (headers.containsKey("Crypto-Key")) {
-                headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + base64url.encode(publicKey));
+                headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + base64url.omitPadding().encode(pk));
             } else {
-                headers.put("Crypto-Key", "p256ecdsa=" + base64url.encode(publicKey));
+                headers.put("Crypto-Key", "p256ecdsa=" + base64url.encode(pk));
             }
         }
 
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            request.addHeader(new BasicHeader(entry.getKey(), entry.getValue()));
+            httpPost.addHeader(new BasicHeader(entry.getKey(), entry.getValue()));
         }
 
-        Async async = Async.newInstance().use(threadpool);
-
-        return async.execute(request);
+        return httpClient.execute(httpPost);
     }
 
     /**
@@ -185,7 +178,7 @@ public class PushService {
      * @param publicKey
      * @return
      */
-    public PushService setPublicKey(byte[] publicKey) {
+    public PushService setPublicKey(PublicKey publicKey) {
         this.publicKey = publicKey;
 
         return this;
@@ -197,7 +190,7 @@ public class PushService {
      * @param privateKey
      * @return
      */
-    public PushService setPrivateKey(byte[] privateKey) {
+    public PushService setPrivateKey(PrivateKey privateKey) {
         this.privateKey = privateKey;
 
         return this;

@@ -62,12 +62,21 @@ public class Notification {
         return getPayload().length > 0;
     }
 
+    /**
+     * Detect if the notification is for a GCM-based subscription
+     *
+     * @return
+     */
+    public boolean isGcm() {
+        return getEndpoint().indexOf("https://android.googleapis.com/gcm/send") == 0;
+    }
+
     public int getTTL() {
         return ttl;
     }
 
     public int getPadSize() {
-        return 1;
+        return 2;
     }
 
     public String getOrigin() throws MalformedURLException {
