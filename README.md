@@ -1,13 +1,13 @@
 # WebPush
 
-A Web Push library for Java.
+A Web Push library for Java 7. Supports payloads and VAPID.
 
 ## Installation
 
 For Gradle, add the following dependency to `build.gradle`:
 
 ```
-compile group: 'nl.martijndwars', name: 'web-push', version: '1.0.0'
+compile group: 'nl.martijndwars', name: 'web-push', version: '2.0.0'
 ```
 
 For Maven, add the following dependency to `pom.xml`:
@@ -16,7 +16,7 @@ For Maven, add the following dependency to `pom.xml`:
 <dependency>
     <groupId>nl.martijndwars</groupId>
     <artifactId>web-push</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
