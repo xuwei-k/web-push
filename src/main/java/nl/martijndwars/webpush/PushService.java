@@ -80,9 +80,9 @@ public class PushService {
         BaseEncoding base64url = BaseEncoding.base64Url();
 
         Encrypted encrypted = encrypt(
-            notification.getPayload(),
-            notification.getUserPublicKey(),
-            notification.getUserAuth(),
+            notification.payload(),
+            notification.userPublicKey(),
+            notification.userAuth(),
             notification.getPadSize()
         );
 
@@ -91,8 +91,8 @@ public class PushService {
 
         HttpClient httpClient = HttpClients.createDefault();
 
-        HttpPost httpPost = new HttpPost(notification.getEndpoint());
-        httpPost.addHeader("TTL", String.valueOf(notification.getTTL()));
+        HttpPost httpPost = new HttpPost(notification.endpoint());
+        httpPost.addHeader("TTL", String.valueOf(notification.ttl()));
 
         Map<String, String> headers = new HashMap<>();
 
