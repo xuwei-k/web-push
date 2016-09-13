@@ -80,13 +80,7 @@ object HttpEce {
   }
 }
 
-import scala.collection.JavaConverters._
-
 final case class HttpEce(keys: Map[String, KeyPair], labels: Map[String, String]) {
-
-  def this(keys: java.util.Map[String, KeyPair], labels: java.util.Map[String, String]) {
-    this(keys.asScala.toMap, labels.asScala.toMap)
-  }
 
   def deriveKey(salt: Array[Byte], key: Array[Byte], keyId: String, dh: PublicKey, authSecret: Array[Byte], padSize: Int): (Array[Byte], Array[Byte]) = {
     var secret: Array[Byte] = null
