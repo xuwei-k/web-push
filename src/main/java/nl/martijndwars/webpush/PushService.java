@@ -70,11 +70,7 @@ public class PushService {
         HttpEce httpEce = new HttpEce(keys, labels);
         byte[] ciphertext = httpEce.encrypt(buffer, salt, null, "server-key-id", userPublicKey, userAuth, padSize);
 
-        return new Encrypted.Builder()
-            .withSalt(salt)
-            .withPublicKey(serverKey.getPublic())
-            .withCiphertext(ciphertext)
-            .build();
+        return new Encrypted(serverKey.getPublic(), salt, ciphertext);
     }
 
     /**
@@ -90,8 +86,8 @@ public class PushService {
             notification.getPadSize()
         );
 
-        byte[] dh = Utils.savePublicKey((ECPublicKey) encrypted.getPublicKey());
-        byte[] salt = encrypted.getSalt();
+        byte[] dh = Utils.savePublicKey((ECPublicKey) encrypted.publicKey());
+        byte[] salt = encrypted.salt().value();
 
         HttpClient httpClient = HttpClients.createDefault();
 
@@ -106,7 +102,7 @@ public class PushService {
             headers.put("Encryption", "keyid=p256dh;salt=" + base64url.omitPadding().encode(salt));
             headers.put("Crypto-Key", "keyid=p256dh;dh=" + base64url.encode(dh));
 
-            httpPost.setEntity(new ByteArrayEntity(encrypted.getCiphertext()));
+            httpPost.setEntity(new ByteArrayEntity(encrypted.ciphertext().value()));
         }
 
         if (notification.isGcm()) {
