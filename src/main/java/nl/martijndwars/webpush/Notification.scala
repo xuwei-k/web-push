@@ -24,11 +24,6 @@ final case class Notification(
 
   def hasPayload: Boolean = payload.length > 0
 
-  /** Detect if the notification is for a GCM-based subscription */
-  def isGcm: Boolean = {
-    endpoint.indexOf("https://android.googleapis.com/gcm/send") == 0
-  }
-
   @throws[MalformedURLException]
   def getOrigin: String = {
     val url = new URL(endpoint)

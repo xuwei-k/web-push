@@ -39,11 +39,11 @@ class PushServiceTest {
     val notification = new Notification(endpoint, userPublicKey, userAuth, "firefox vapid".getBytes)
     // Construct push service
     val pushService = new PushService
-    pushService.setSubject("hoge hoge")
-    pushService.setPublicKey(Utils.loadPublicKey(vapidPublicKey))
-    pushService.setPrivateKey(Utils.loadPrivateKey(vapidPrivateKey))
-    // Send notification!
-    val httpResponse = pushService.send(notification)
+    val httpResponse = pushService.send(
+      notification = notification,
+      publicKey = Utils.loadPublicKey(vapidPublicKey),
+      privateKey = Utils.loadPrivateKey(vapidPrivateKey)
+    )
     println(httpResponse.getStatusLine.getStatusCode)
     println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
   }
@@ -65,60 +65,12 @@ class PushServiceTest {
     val notification = new Notification(endpoint, userPublicKey, userAuth, "chrome vapid".getBytes)
     // Construct push service
     val pushService = new PushService
-    pushService.setSubject("hoge hoge")
-    pushService.setPublicKey(Utils.loadPublicKey(vapidPublicKey))
-    pushService.setPrivateKey(Utils.loadPrivateKey(vapidPrivateKey))
+    val httpResponse = pushService.send(
+      notification = notification,
+      publicKey = Utils.loadPublicKey(vapidPublicKey),
+      privateKey = Utils.loadPrivateKey(vapidPrivateKey)
+    )
     // Send notification!
-    val httpResponse = pushService.send(notification)
-    println(httpResponse.getStatusLine.getStatusCode)
-    println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
-  }
-
-  @Test
-  @throws[Exception]
-  def testPushFirefox(): Unit = {
-
-    val endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX149UV6uGhOLjUm0RttESZXojQW0d1FNJfESIJiZ7sPHmznANktBsrbs1oW5Z5n3yymravMrZkJIvJoDU6f2aT-bm5Ei7oLHmNF_LXru_flL9WrJVGxy5ZFRdEGYXLpx-jFoh"
-    val encodedUserAuth = "THXSUTo0vF-0-TKXC23f3A=="
-    val encodedUserPublicKey = "BDDD-m2_cqcZHFqphi8yqyl6VtgMb4WAi4MVwaI8_ctckM3zkUOe509QJO7M0V1YhqGUnGrgkXkbI4MA_jfEyzw="
-
-    /*
-    val endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX1Y_lvdzIpzBfRnceQdoNa_DiDy2OH7weXClk5ysidEuoPH8xv0Qq9ADFNTAB4e1TOuT50bbpN-bWVymBqy1b6Mecrz_SHf8Hvh620ViAbL5Zuyp5AqlA7i6g4BGX8h1H23zH"
-    // Base64 string user public key/auth
-    val encodedUserPublicKey = "BNYbTpyTEUFNK9BacT1rgpx7SXuKkLVKOF0LFnK8mLyPeW3SLk3nmXoPXSCkNKovcKChNxbG+q3mGW9J8JRg+6w="
-    val encodedUserAuth = "40SZaWpcvu55C+mlWxu0kA=="
-    */
-
-    // Converting to other data types...
-    val userPublicKey = Utils.loadPublicKey(encodedUserPublicKey)
-    val userAuth = Utils.base64Decode(encodedUserAuth)
-    // Construct notification
-    val notification: Notification = new Notification(endpoint, userPublicKey, userAuth, "firefox".getBytes)
-    // Construct push service
-    val pushService = new PushService
-    // Send notification!
-    val httpResponse = pushService.send(notification)
-    println(httpResponse.getStatusLine.getStatusCode)
-    println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
-  }
-
-  @Test
-  @throws[Exception]
-  def testPushChrome(): Unit = {
-    val endpoint = "https://android.googleapis.com/gcm/send/fIYEoSib764:APA91bGLILlBB9XnndQC-fWWM1D-Ji2reiVnRS-sM_kfHQyVssWadi6XRCfd9Dxf74fL6y3-Zaazohhl_W4MCLaqhdr5-WucacYjQS6B5-VyOwYQxzEkU2QABvUUxBcZw91SHYDGmkIt"
-    // Base64 string user public key/auth
-    val encodedUserPublicKey = "BA7JhUzMirCMHC94XO4ODFb7sYzZPMERp2AFfHLs1Hi1ghdvUfid8dlNseAsXD7LAF+J33X+ViRJ/APpW8cnrko="
-    val encodedUserAuth = "8wtwPHBdZ7LWY4p4WWJIzA=="
-    // Converting to other data types...
-    val userPublicKey = Utils.loadPublicKey(encodedUserPublicKey)
-    val userAuth  = Utils.base64Decode(encodedUserAuth)
-    // Construct notification
-    val notification = new Notification(endpoint, userPublicKey, userAuth, "chrome".getBytes)
-    // Construct push service
-    val pushService = new PushService
-    pushService.setGcmApiKey("AIzaSyDSa2bw0b0UGOmkZRw-dqHGQRI_JqpiHug")
-    // Send notification!
-    val httpResponse = pushService.send(notification)
     println(httpResponse.getStatusLine.getStatusCode)
     println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
   }

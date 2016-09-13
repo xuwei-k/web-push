@@ -36,27 +36,11 @@ object PushService {
 }
 
 final class PushService {
-  /**
-    * The Google Cloud Messaging API key (for pre-VAPID in Chrome)
-    */
-  private[this] var gcmApiKey: String = null
-  /**
-    * Subject used in the JWT payload (for VAPID)
-    */
-  private[this] var subject: String = null
-  /**
-    * The public key (for VAPID)
-    */
-  private[this] var publicKey: PublicKey = null
-  /**
-    * The private key (for VAPID)
-    */
-  private[this] var privateKey: Key = null
 
   /**
     * Send a notification
     */
-  def send(notification: Notification): HttpResponse = {
+  def send(notification: Notification, publicKey: PublicKey, privateKey: Key, subject: Option[String] = None): HttpResponse = {
     val base64url = BaseEncoding.base64Url
     val encrypted: Encrypted = PushService.encrypt(
       buffer = notification.payload,
@@ -75,32 +59,26 @@ final class PushService {
       headers.put("Crypto-Key", "keyid=p256dh;dh=" + base64url.encode(dh))
       httpPost.setEntity(new ByteArrayEntity(encrypted.ciphertext.value))
     }
-    if (notification.isGcm) {
-      if (gcmApiKey == null) {
-        throw new IllegalStateException("An GCM API key is needed to send a push notification to a GCM endpoint.")
-      }
-      headers.put("Authorization", "key=" + gcmApiKey)
+
+    val claims = new JwtClaims
+    claims.setAudience(notification.getOrigin)
+    claims.setExpirationTimeMinutesInTheFuture(12 * 60)
+    claims.setSubject(subject.orNull)
+    val jws = new JsonWebSignature
+    jws.setHeader("typ", "JWT")
+    jws.setHeader("alg", "ES256")
+    jws.setPayload(claims.toJson)
+    jws.setKey(privateKey)
+    jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256)
+    headers.put("Authorization", "Bearer " + jws.getCompactSerialization)
+    val pk = Utils.savePublicKey(publicKey.asInstanceOf[ECPublicKey])
+    if (headers.containsKey("Crypto-Key")) {
+      headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + base64url.omitPadding.encode(pk))
     }
-    if (vapidEnabled && !notification.isGcm) {
-      val claims = new JwtClaims
-      claims.setAudience(notification.getOrigin)
-      claims.setExpirationTimeMinutesInTheFuture(12 * 60)
-      claims.setSubject(subject)
-      val jws = new JsonWebSignature
-      jws.setHeader("typ", "JWT")
-      jws.setHeader("alg", "ES256")
-      jws.setPayload(claims.toJson)
-      jws.setKey(privateKey)
-      jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256)
-      headers.put("Authorization", "Bearer " + jws.getCompactSerialization)
-      val pk = Utils.savePublicKey(publicKey.asInstanceOf[ECPublicKey])
-      if (headers.containsKey("Crypto-Key")) {
-        headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + base64url.omitPadding.encode(pk))
-      }
-      else {
-        headers.put("Crypto-Key", "p256ecdsa=" + base64url.encode(pk))
-      }
+    else {
+      headers.put("Crypto-Key", "p256ecdsa=" + base64url.encode(pk))
     }
+
     import scala.collection.JavaConverters._
     for (entry <- headers.entrySet.asScala) {
       httpPost.addHeader(new BasicHeader(entry.getKey, entry.getValue))
@@ -109,33 +87,4 @@ final class PushService {
     httpClient.execute(httpPost)
   }
 
-  /** Set the Google Cloud Messaging (GCM) API key
-    */
-  def setGcmApiKey(gcmApiKey: String): this.type = {
-    this.gcmApiKey = gcmApiKey
-    this
-  }
-
-  /** Set the JWT subject (for VAPID) */
-  def setSubject(subject: String): this.type = {
-    this.subject = subject
-    this
-  }
-
-  /** Set the public key (for VAPID) */
-  def setPublicKey(publicKey: PublicKey): this.type = {
-    this.publicKey = publicKey
-    this
-  }
-
-  /** Set the private key (for VAPID) */
-  def setPrivateKey(privateKey: PrivateKey): this.type = {
-    this.privateKey = privateKey
-    this
-  }
-
-  /** Check if VAPID is enabled */
-  private[this] def vapidEnabled: Boolean = {
-    publicKey != null && privateKey != null
-  }
 }
