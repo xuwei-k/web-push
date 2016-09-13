@@ -2,10 +2,6 @@ package nl.martijndwars.webpush
 
 import org.apache.commons.io.IOUtils
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.jose4j.jws.AlgorithmIdentifiers
-import org.jose4j.jws.JsonWebSignature
-import org.jose4j.jwt.JwtClaims
-import org.json.JSONObject
 import org.junit.BeforeClass
 import org.junit.Test
 import java.nio.charset.StandardCharsets
@@ -15,27 +11,35 @@ object PushServiceTest{
   @BeforeClass def addSecurityProvider(): Unit = {
     Security.addProvider(new BouncyCastleProvider)
   }
+
+  def main(args: Array[String]): Unit = {
+    addSecurityProvider()
+    val t = new PushServiceTest()
+    //t.testPushFirefox()
+    t.testPushFirefoxVapid()
+    t.testPushChromeVapid()
+  }
 }
 
 class PushServiceTest {
 
   @Test
   def testPushFirefoxVapid(): Unit = {
-    val endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX1ZgBNvDz6ZIAh6OqNh3hN4ZLEa57oS22mHI70mnvrDbIi-MnJu7FxFzvMV31L_AnIxP_p1Ot47KP8Xmit3XIQjZDjTahqBPmmntWX8JM6AtRxcAHxmXH6KqhyWwL1QEA0jBp"
-    // Base64 string user public key/auth
-    val encodedUserPublicKey = "BLLgHYo0xlN3GDSrz4g6SpTDLvJv+oFR0FSLLnncXFojvVyoOePpNXaUpsj4s/huAX7zb+qS1Lxo6qNLXNgWN7k="
-    val encodedUserAuth = "wkbtrbgITbb9qPBVOw3ftw=="
+    val endpoint = "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABX16aXPtldVStjKd9QImFVzmU-qxh3IjYch3i6fdUlY2kbTlh1micq1eFbYdn-utSxV97Oq7EZjIpBE1vLVazaHZnQ0OX3XPtHwWQ-tp34u-NCbXwWWtML-B7_SIy_uYHhVVFG4KfI6w0qvthF2Xf2b98t2Lrvb6088Sjh-HZNRBTcAaE"
+    val encodedUserAuth = "2A9zwm6Jwp6l51Jq1sV4Pg=="
+    val encodedUserPublicKey = "BEqa1zJCVzU9dr6AR6bXpfYigPx3rYUf2d_o9aVxIt5l0iytTs8d9kyM4oDju_5NxKlSP8X3NoQk_2Z_YOV56zM="
+
     // Base64 string server public/private key
-    val vapidPublicKey = "BOH8nTQA5iZhl23+NCzGG9prvOZ5BE0MJXBW+GUkQIvRVTVB32JxmX0V1j6z0r7rnT7+bgi6f2g5fMPpAh5brqM="
-    val vapidPrivateKey = "TRlY/7yQzvqcLpgHQTxiU5fVzAAvAw/cdSh5kLFLNqg="
+    val vapidPublicKey = "BJXsuKNd1fxVbUEHVeN3nDdnd3+WlKETa1H4P0+JqYCozY1RroOh7XFyhQgcduEiQeA4K7ZUvayM3Wb+OcqUKxE="
+    val vapidPrivateKey = "ANswHZjcOe7BhuMXSSzo6MzS9kD86dGTCaGyjj7fUb3C"
     // Converting to other data types...
     val userPublicKey = Utils.loadPublicKey(encodedUserPublicKey)
     val userAuth = Utils.base64Decode(encodedUserAuth)
     // Construct notification
-    val notification = new Notification(endpoint, userPublicKey, userAuth, getPayload)
+    val notification = new Notification(endpoint, userPublicKey, userAuth, "firefox vapid".getBytes)
     // Construct push service
     val pushService = new PushService
-    pushService.setSubject("mailto:admin@martijndwars.nl")
+    pushService.setSubject("hoge hoge")
     pushService.setPublicKey(Utils.loadPublicKey(vapidPublicKey))
     pushService.setPrivateKey(Utils.loadPrivateKey(vapidPrivateKey))
     // Send notification!
@@ -47,21 +51,21 @@ class PushServiceTest {
   @Test
   @throws[Exception]
   def testPushChromeVapid(): Unit = {
-    val endpoint = "https://fcm.googleapis.com/fcm/send/fAAs_rrnDHQ:APA91bHlqjMZzphwP2xckJa9jL0CwtEvlLTL1OEfmRuwqviGLnqQTvMr4WLiwg7jElESXPLYO7qUc5mWvvv-bqs9lRenEbUSL2R191F-quyhE_fZ6JM3giqMQMhAEifDG-s5eHsRPQUG"
-    // Base64 string user public key/auth
-    val encodedUserPublicKey = "BM9qL254VsQlM8Zi6Hd0khUYSn8075A+td+/DZELdA2L173DIDz42NbjZC51NRfAuVaxh/vT/+UZr37S55EtY7k="
-    val encodedUserAuth = "KaiGaQKMyCW8qEk2NMJwjA=="
+    val endpoint = "https://fcm.googleapis.com/fcm/send/e2RHVhnaV2c:APA91bGpDxd6icb8F6eLLFnRvRslrO76pDJ7hvAcEJ6wV6gtA55nO3KAv8aOgxkuBQZzQb8H8BGEz7xALA717ZMvgW2ejjOsFCkeCcTw8FCcYZ0Db3dFKrJFerZ9cQeznl1A1uRxos5b"
+    val encodedUserAuth = "mjj26aedI45B2WKB3kA5Ag=="
+    val encodedUserPublicKey = "BDhYjjf4Vai_7K5Fnk5Fj2k5Q_P_VBCBbXi4xiYi-vQsBmEQax_eDLecS2-VpAilzdeJ9iuOoIpodtvxdGJZYE4="
+
     // Base64 string server public/private key
-    val vapidPublicKey = "BOH8nTQA5iZhl23+NCzGG9prvOZ5BE0MJXBW+GUkQIvRVTVB32JxmX0V1j6z0r7rnT7+bgi6f2g5fMPpAh5brqM="
-    val vapidPrivateKey = "TRlY/7yQzvqcLpgHQTxiU5fVzAAvAw/cdSh5kLFLNqg="
+    val vapidPublicKey = "BJXsuKNd1fxVbUEHVeN3nDdnd3+WlKETa1H4P0+JqYCozY1RroOh7XFyhQgcduEiQeA4K7ZUvayM3Wb+OcqUKxE="
+    val vapidPrivateKey = "ANswHZjcOe7BhuMXSSzo6MzS9kD86dGTCaGyjj7fUb3C"
     // Converting to other data types...
     val userPublicKey = Utils.loadPublicKey(encodedUserPublicKey)
     val userAuth = Utils.base64Decode(encodedUserAuth)
     // Construct notification
-    val notification = new Notification(endpoint, userPublicKey, userAuth, getPayload)
+    val notification = new Notification(endpoint, userPublicKey, userAuth, "chrome vapid".getBytes)
     // Construct push service
     val pushService = new PushService
-    pushService.setSubject("mailto:admin@martijndwars.nl")
+    pushService.setSubject("hoge hoge")
     pushService.setPublicKey(Utils.loadPublicKey(vapidPublicKey))
     pushService.setPrivateKey(Utils.loadPrivateKey(vapidPrivateKey))
     // Send notification!
@@ -73,15 +77,23 @@ class PushServiceTest {
   @Test
   @throws[Exception]
   def testPushFirefox(): Unit = {
+
+    val endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX149UV6uGhOLjUm0RttESZXojQW0d1FNJfESIJiZ7sPHmznANktBsrbs1oW5Z5n3yymravMrZkJIvJoDU6f2aT-bm5Ei7oLHmNF_LXru_flL9WrJVGxy5ZFRdEGYXLpx-jFoh"
+    val encodedUserAuth = "THXSUTo0vF-0-TKXC23f3A=="
+    val encodedUserPublicKey = "BDDD-m2_cqcZHFqphi8yqyl6VtgMb4WAi4MVwaI8_ctckM3zkUOe509QJO7M0V1YhqGUnGrgkXkbI4MA_jfEyzw="
+
+    /*
     val endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX1Y_lvdzIpzBfRnceQdoNa_DiDy2OH7weXClk5ysidEuoPH8xv0Qq9ADFNTAB4e1TOuT50bbpN-bWVymBqy1b6Mecrz_SHf8Hvh620ViAbL5Zuyp5AqlA7i6g4BGX8h1H23zH"
     // Base64 string user public key/auth
     val encodedUserPublicKey = "BNYbTpyTEUFNK9BacT1rgpx7SXuKkLVKOF0LFnK8mLyPeW3SLk3nmXoPXSCkNKovcKChNxbG+q3mGW9J8JRg+6w="
     val encodedUserAuth = "40SZaWpcvu55C+mlWxu0kA=="
+    */
+
     // Converting to other data types...
     val userPublicKey = Utils.loadPublicKey(encodedUserPublicKey)
     val userAuth = Utils.base64Decode(encodedUserAuth)
     // Construct notification
-    val notification: Notification = new Notification(endpoint, userPublicKey, userAuth, getPayload)
+    val notification: Notification = new Notification(endpoint, userPublicKey, userAuth, "firefox".getBytes)
     // Construct push service
     val pushService = new PushService
     // Send notification!
@@ -101,7 +113,7 @@ class PushServiceTest {
     val userPublicKey = Utils.loadPublicKey(encodedUserPublicKey)
     val userAuth  = Utils.base64Decode(encodedUserAuth)
     // Construct notification
-    val notification = new Notification(endpoint, userPublicKey, userAuth, getPayload)
+    val notification = new Notification(endpoint, userPublicKey, userAuth, "chrome".getBytes)
     // Construct push service
     val pushService = new PushService
     pushService.setGcmApiKey("AIzaSyDSa2bw0b0UGOmkZRw-dqHGQRI_JqpiHug")
@@ -111,27 +123,4 @@ class PushServiceTest {
     println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
   }
 
-  @Test
-  def testSign(): Unit = {
-    // Base64 string server public/private key
-    val vapidPublicKey = "BOH8nTQA5iZhl23+NCzGG9prvOZ5BE0MJXBW+GUkQIvRVTVB32JxmX0V1j6z0r7rnT7+bgi6f2g5fMPpAh5brqM="
-    val vapidPrivateKey = "TRlY/7yQzvqcLpgHQTxiU5fVzAAvAw/cdSh5kLFLNqg="
-    val claims = new JwtClaims
-    claims.setAudience("https://developer.services.mozilla.com/a476b8ea-c4b8-4359-832a-e2747b6ab88a")
-    val jws = new JsonWebSignature
-    jws.setPayload(claims.toJson)
-    jws.setKey(Utils.loadPrivateKey(vapidPrivateKey))
-    jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256)
-    println(jws.getCompactSerialization)
-  }
-
-  /**
-    * Some dummy payload (a JSON object)
-    */
-  private def getPayload: Array[Byte] = {
-    val jsonObject = new JSONObject
-    jsonObject.append("title", "Hello")
-    jsonObject.append("message", "World")
-    jsonObject.toString.getBytes(StandardCharsets.UTF_8)
-  }
 }
