@@ -103,7 +103,7 @@ dependencies {
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.54'
 
     // For encoding JSON
-    compile group: 'org.json', name: 'json', version: '20160212'
+    testCompile group: 'org.json', name: 'json', version: '20160212'
 
     // For creating and signing JWT
     compile group: 'org.bitbucket.b_c', name: 'jose4j', version: '0.5.2'
