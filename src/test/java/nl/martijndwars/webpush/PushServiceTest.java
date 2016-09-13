@@ -1,5 +1,7 @@
 package nl.martijndwars.webpush;
 
+import com.google.common.base.Function;
+import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -9,6 +11,13 @@ import org.jose4j.jwt.JwtClaims;
 import org.json.JSONObject;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.firefox.MarionetteDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
@@ -163,5 +172,60 @@ public class PushServiceTest {
         jsonObject.append("message", "World");
 
         return jsonObject.toString().getBytes();
+    }
+
+    @Test
+    public void testWithSeleniumFireFox() throws Exception {
+        // FF 47 and above requires MarionetteDriver
+        MarionetteDriverManager.getInstance().setup();
+
+        // Open the page
+        /*
+        https://github.com/SeleniumHQ/selenium/blob/master/java/client/src/org/openqa/selenium/firefox/MarionetteDriver.java#L31
+
+        FirefoxProfile firefoxProfile = new FirefoxProfile();
+
+        DesiredCapabilities desiredCapabilities = DesiredCapabilities.firefox();
+        desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
+        desiredCapabilities.setCapability("marionette", true);
+
+        WebDriver webDriver = new FirefoxDriver(desiredCapabilities);
+        */
+
+        WebDriver webDriver = new MarionetteDriver();
+        webDriver.get("http://localhost:8081/");
+
+        // Wait until the subscription is set
+        WebDriverWait webDriverWait = new WebDriverWait(webDriver, 10L);
+        webDriverWait.until(new Function<WebDriver, Boolean>() {
+            @Override
+            public Boolean apply(WebDriver webDriver) {
+                return ((JavascriptExecutor) webDriver)
+                    .executeScript("return window.subscription != null")
+                    .equals(true);
+            }
+        });
+
+        // Get subscription from browser
+        JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
+        String subscriptionJson = (String) javascriptExecutor.executeScript("return window.subscription");
+
+        // Extract data from JSON string
+        JSONObject subscription = new JSONObject(subscriptionJson);
+        String endpoint = subscription.getString("endpoint");
+        String userAuthBase64 = subscription.getJSONObject("keys").getString("auth");
+        String userPublicKeyBase64 = subscription.getJSONObject("keys").getString("p256dh");
+
+        // Construct notification
+        Notification notification = new Notification(
+            endpoint,
+            Utils.loadPublicKey(userPublicKeyBase64),
+            Utils.base64Decode(userAuthBase64),
+            getPayload()
+        );
+
+        // Construct push service
+        PushService pushService = new PushService();
+        pushService.send(notification);
     }
 }
