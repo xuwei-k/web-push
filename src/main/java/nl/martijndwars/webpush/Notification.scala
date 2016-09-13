@@ -29,10 +29,6 @@ final case class Notification(
     endpoint.indexOf("https://android.googleapis.com/gcm/send") == 0
   }
 
-  def getPadSize: Int = {
-    2
-  }
-
   @throws[MalformedURLException]
   def getOrigin: String = {
     val url = new URL(endpoint)

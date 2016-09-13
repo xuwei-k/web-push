@@ -82,7 +82,7 @@ object HttpEce {
 
 final case class HttpEce(keys: Map[String, KeyPair], labels: Map[String, String]) {
 
-  def deriveKey(salt: Array[Byte], key: Array[Byte], keyId: String, dh: PublicKey, authSecret: Array[Byte], padSize: Int): (Array[Byte], Array[Byte]) = {
+  def deriveKey(salt: Array[Byte], key: Array[Byte], keyId: String, dh: PublicKey, authSecret: Array[Byte]): (Array[Byte], Array[Byte]) = {
     var secret: Array[Byte] = null
     var context: Array[Byte] = null
     if (key != null) {
@@ -123,8 +123,9 @@ final case class HttpEce(keys: Map[String, KeyPair], labels: Map[String, String]
     (secret, context)
   }
 
-  def encrypt(buffer: Array[Byte], salt: Array[Byte], key: Array[Byte], keyid: String, dh: PublicKey, authSecret: Array[Byte], padSize: Int): Array[Byte] = {
-    val derivedKey = deriveKey(salt, key, keyid, dh, authSecret, padSize)
+  def encrypt(buffer: Array[Byte], salt: Array[Byte], key: Array[Byte], keyid: String, dh: PublicKey, authSecret: Array[Byte]): Array[Byte] = {
+    val padSize = 2
+    val derivedKey = deriveKey(salt, key, keyid, dh, authSecret)
     val key_ = derivedKey._1
     val nonce_ = derivedKey._2
     val cipher = Cipher.getInstance("AES/GCM/NoPadding", "BC")

@@ -12,7 +12,6 @@ import org.jose4j.jws.AlgorithmIdentifiers
 import org.jose4j.jws.JsonWebSignature
 import org.jose4j.jwt.JwtClaims
 import java.security._
-import java.util
 
 object PushService {
   /**
@@ -22,7 +21,7 @@ object PushService {
     * @return An Encrypted object containing the public key, salt, and
     *         ciphertext, which can be sent to the other party.
     */
-  def encrypt(buffer: Array[Byte], userPublicKey: PublicKey, userAuth: Array[Byte], padSize: Int): Encrypted = {
+  def encrypt(buffer: Array[Byte], userPublicKey: PublicKey, userAuth: Array[Byte]): Encrypted = {
     val parameterSpec = ECNamedCurveTable.getParameterSpec("prime256v1")
     val keyPairGenerator = KeyPairGenerator.getInstance("ECDH", "BC")
     keyPairGenerator.initialize(parameterSpec)
@@ -31,8 +30,8 @@ object PushService {
     val labels = Map("server-key-id" -> "P-256")
     val salt = SecureRandom.getSeed(16)
     val httpEce = new HttpEce(keys, labels)
-    val ciphertext = httpEce.encrypt(buffer, salt, null, "server-key-id", userPublicKey, userAuth, padSize)
-    new Encrypted(serverKey.getPublic, salt, ciphertext)
+    val ciphertext = httpEce.encrypt(buffer, salt, null, "server-key-id", userPublicKey, userAuth)
+    new Encrypted(publicKey = serverKey.getPublic, salt = salt, ciphertext = ciphertext)
   }
 }
 
@@ -59,13 +58,16 @@ final class PushService {
     */
   def send(notification: Notification): HttpResponse = {
     val base64url = BaseEncoding.base64Url
-    val encrypted: Encrypted = PushService.encrypt(notification.payload, notification.userPublicKey, notification.userAuth, notification.getPadSize)
+    val encrypted: Encrypted = PushService.encrypt(
+      buffer = notification.payload,
+      userPublicKey =  notification.userPublicKey,
+      userAuth = notification.userAuth
+    )
     val dh = Utils.savePublicKey(encrypted.publicKey.asInstanceOf[ECPublicKey])
     val salt = encrypted.salt.value
-    val httpClient = HttpClients.createDefault
     val httpPost = new HttpPost(notification.endpoint)
     httpPost.addHeader("TTL", String.valueOf(notification.ttl))
-    val headers = new util.HashMap[String, String]
+    val headers = new java.util.HashMap[String, String]
     if (notification.hasPayload) {
       headers.put("Content-Type", "application/octet-stream")
       headers.put("Content-Encoding", "aesgcm")
@@ -103,6 +105,7 @@ final class PushService {
     for (entry <- headers.entrySet.asScala) {
       httpPost.addHeader(new BasicHeader(entry.getKey, entry.getValue))
     }
+    val httpClient = HttpClients.createDefault
     httpClient.execute(httpPost)
   }
 
@@ -132,7 +135,7 @@ final class PushService {
   }
 
   /** Check if VAPID is enabled */
-  private def vapidEnabled: Boolean = {
+  private[this] def vapidEnabled: Boolean = {
     publicKey != null && privateKey != null
   }
 }
