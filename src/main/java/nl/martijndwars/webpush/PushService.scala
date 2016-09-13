@@ -77,7 +77,7 @@ final class PushService {
     }
     if (notification.isGcm) {
       if (gcmApiKey == null) {
-        throw new IllegalStateException("An GCM API key is needed to send a push notification to a GCM endpint.")
+        throw new IllegalStateException("An GCM API key is needed to send a push notification to a GCM endpoint.")
       }
       headers.put("Authorization", "key=" + gcmApiKey)
     }
