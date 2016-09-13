@@ -25,6 +25,10 @@ For Maven, add the following dependency to `pom.xml`:
 See [doc/UsageExample.md](https://github.com/MartijnDwars/web-push/blob/master/doc/UsageExample.md)
 for detailed usage instructions. If you plan on using VAPID, read [doc/VAPID.md](https://github.com/MartijnDwars/web-push/blob/master/doc/VAPID.md).
 
+## Testing
+
+We use Selenium to interact with a browser.
+
 ## Credit
 
 To give credit where credit is due, the PushService is mostly a Java port of marco-c/web-push. The HttpEce class is mostly a Java port of martinthomson/encrypted-content-encoding.

@@ -1,6 +1,6 @@
 package nl.martijndwars.webpush;
 
-import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -15,7 +15,6 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.firefox.MarionetteDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -180,26 +179,28 @@ public class PushServiceTest {
         MarionetteDriverManager.getInstance().setup();
 
         // Open the page
-        /*
-        https://github.com/SeleniumHQ/selenium/blob/master/java/client/src/org/openqa/selenium/firefox/MarionetteDriver.java#L31
+        // https://github.com/SeleniumHQ/selenium/blob/master/java/client/src/org/openqa/selenium/firefox/MarionetteDriver.java#L31
 
+        // None of these seem to work..
         FirefoxProfile firefoxProfile = new FirefoxProfile();
+        firefoxProfile.setPreference("security.turn_off_all_security_so_that_viruses_can_take_over_this_computer", true);
+        firefoxProfile.setPreference("dom.push.testing.ignorePermission", true);
+        firefoxProfile.setPreference("notification.prompt.testing", true);
+        firefoxProfile.setPreference("notification.prompt.testing.allow", true);
 
         DesiredCapabilities desiredCapabilities = DesiredCapabilities.firefox();
         desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
         desiredCapabilities.setCapability("marionette", true);
 
         WebDriver webDriver = new FirefoxDriver(desiredCapabilities);
-        */
 
-        WebDriver webDriver = new MarionetteDriver();
+        //WebDriver webDriver = new MarionetteDriver();
         webDriver.get("http://localhost:8081/");
 
         // Wait until the subscription is set
-        WebDriverWait webDriverWait = new WebDriverWait(webDriver, 10L);
-        webDriverWait.until(new Function<WebDriver, Boolean>() {
+        (new WebDriverWait(webDriver, 100L)).until(new Predicate<WebDriver>() {
             @Override
-            public Boolean apply(WebDriver webDriver) {
+            public boolean apply(WebDriver webDriver) {
                 return ((JavascriptExecutor) webDriver)
                     .executeScript("return window.subscription != null")
                     .equals(true);
@@ -227,5 +228,8 @@ public class PushServiceTest {
         // Construct push service
         PushService pushService = new PushService();
         pushService.send(notification);
+
+        // Close the browser
+        webDriver.quit();
     }
 }

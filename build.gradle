@@ -112,8 +112,9 @@ dependencies {
 
     testCompile 'org.eclipse.jetty:jetty-server:9.4.0.M1'
 
-    testCompile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '2.53.1'
-    testCompile group: 'org.seleniumhq.selenium', name: 'selenium-firefox-driver', version: '2.53.1'
+    //testCompile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '2.53.1'
+    //testCompile group: 'org.seleniumhq.selenium', name: 'selenium-firefox-driver', version: '2.53.1'
+    testCompile group: 'org.seleniumhq.selenium', name: 'selenium-server', version: '3.0.0-beta3'
 
     // Selenium 2.53 needs the Marionette driver. WebDriverManager downloads and makes it available.
     // See https://github.com/SeleniumHQ/selenium/issues/1862
