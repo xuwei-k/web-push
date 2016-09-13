@@ -6,73 +6,82 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.nio.charset.StandardCharsets
 import java.security.Security
+import nl.martijndwars.webpush.PushServiceTest.TestParam
 
 object PushServiceTest{
   @BeforeClass def addSecurityProvider(): Unit = {
     Security.addProvider(new BouncyCastleProvider)
   }
 
-  def main(args: Array[String]): Unit = {
-    addSecurityProvider()
-    val t = new PushServiceTest()
-    //t.testPushFirefox()
-    t.testPushFirefoxVapid()
-    t.testPushChromeVapid()
+  final case class TestParam(
+    endpoint: String,
+    userAuth: String,
+    userPublicKey: String,
+    vapidPublicKey: String,
+    vapidPrivateKey: String,
+    payload: String
+  )
+
+  def doTest(param: TestParam): Unit = {
+    // Converting to other data types...
+    val userPublicKey = Utils.loadPublicKey(param.userPublicKey)
+    val userAuth = Utils.base64Decode(param.userAuth)
+    // Construct notification
+    val notification = new Notification(param.endpoint, userPublicKey, userAuth, param.payload.getBytes(StandardCharsets.UTF_8))
+    // Construct push service
+    val pushService = new PushService
+    val httpResponse = pushService.send(
+      notification = notification,
+      publicKey = Utils.loadPublicKey(param.vapidPublicKey),
+      privateKey = Utils.loadPrivateKey(param.vapidPrivateKey)
+    )
+    println(httpResponse.getStatusLine.getStatusCode)
+    println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
   }
+
+}
+
+abstract class WebpushTest{
+  def param: TestParam
+
+  final def main(args: Array[String]): Unit = {
+    PushServiceTest.addSecurityProvider()
+    PushServiceTest.doTest(param)
+  }
+}
+
+object FirefoxTest extends WebpushTest {
+  override val param = TestParam(
+    endpoint = "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABX16aXPtldVStjKd9QImFVzmU-qxh3IjYch3i6fdUlY2kbTlh1micq1eFbYdn-utSxV97Oq7EZjIpBE1vLVazaHZnQ0OX3XPtHwWQ-tp34u-NCbXwWWtML-B7_SIy_uYHhVVFG4KfI6w0qvthF2Xf2b98t2Lrvb6088Sjh-HZNRBTcAaE",
+    userAuth = "2A9zwm6Jwp6l51Jq1sV4Pg==",
+    userPublicKey = "BEqa1zJCVzU9dr6AR6bXpfYigPx3rYUf2d_o9aVxIt5l0iytTs8d9kyM4oDju_5NxKlSP8X3NoQk_2Z_YOV56zM=",
+    vapidPublicKey = "BJXsuKNd1fxVbUEHVeN3nDdnd3+WlKETa1H4P0+JqYCozY1RroOh7XFyhQgcduEiQeA4K7ZUvayM3Wb+OcqUKxE=",
+    vapidPrivateKey = "ANswHZjcOe7BhuMXSSzo6MzS9kD86dGTCaGyjj7fUb3C",
+    payload = s"firefox vapid ${new java.util.Date} ${sys.env.get("HOME")}"
+  )
+}
+
+object ChromeTest extends WebpushTest {
+  override val param = TestParam(
+    endpoint = "https://fcm.googleapis.com/fcm/send/e2RHVhnaV2c:APA91bGpDxd6icb8F6eLLFnRvRslrO76pDJ7hvAcEJ6wV6gtA55nO3KAv8aOgxkuBQZzQb8H8BGEz7xALA717ZMvgW2ejjOsFCkeCcTw8FCcYZ0Db3dFKrJFerZ9cQeznl1A1uRxos5b",
+    userAuth = "mjj26aedI45B2WKB3kA5Ag==",
+    userPublicKey = "BDhYjjf4Vai_7K5Fnk5Fj2k5Q_P_VBCBbXi4xiYi-vQsBmEQax_eDLecS2-VpAilzdeJ9iuOoIpodtvxdGJZYE4=",
+    vapidPublicKey = "BJXsuKNd1fxVbUEHVeN3nDdnd3+WlKETa1H4P0+JqYCozY1RroOh7XFyhQgcduEiQeA4K7ZUvayM3Wb+OcqUKxE=",
+    vapidPrivateKey = "ANswHZjcOe7BhuMXSSzo6MzS9kD86dGTCaGyjj7fUb3C",
+    payload = s"chrome vapid ${new java.util.Date} ${sys.env.get("HOME")}"
+  )
 }
 
 class PushServiceTest {
 
   @Test
   def testPushFirefoxVapid(): Unit = {
-    val endpoint = "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABX16aXPtldVStjKd9QImFVzmU-qxh3IjYch3i6fdUlY2kbTlh1micq1eFbYdn-utSxV97Oq7EZjIpBE1vLVazaHZnQ0OX3XPtHwWQ-tp34u-NCbXwWWtML-B7_SIy_uYHhVVFG4KfI6w0qvthF2Xf2b98t2Lrvb6088Sjh-HZNRBTcAaE"
-    val encodedUserAuth = "2A9zwm6Jwp6l51Jq1sV4Pg=="
-    val encodedUserPublicKey = "BEqa1zJCVzU9dr6AR6bXpfYigPx3rYUf2d_o9aVxIt5l0iytTs8d9kyM4oDju_5NxKlSP8X3NoQk_2Z_YOV56zM="
-
-    // Base64 string server public/private key
-    val vapidPublicKey = "BJXsuKNd1fxVbUEHVeN3nDdnd3+WlKETa1H4P0+JqYCozY1RroOh7XFyhQgcduEiQeA4K7ZUvayM3Wb+OcqUKxE="
-    val vapidPrivateKey = "ANswHZjcOe7BhuMXSSzo6MzS9kD86dGTCaGyjj7fUb3C"
-    // Converting to other data types...
-    val userPublicKey = Utils.loadPublicKey(encodedUserPublicKey)
-    val userAuth = Utils.base64Decode(encodedUserAuth)
-    // Construct notification
-    val notification = new Notification(endpoint, userPublicKey, userAuth, "firefox vapid".getBytes)
-    // Construct push service
-    val pushService = new PushService
-    val httpResponse = pushService.send(
-      notification = notification,
-      publicKey = Utils.loadPublicKey(vapidPublicKey),
-      privateKey = Utils.loadPrivateKey(vapidPrivateKey)
-    )
-    println(httpResponse.getStatusLine.getStatusCode)
-    println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
+    PushServiceTest.doTest(FirefoxTest.param)
   }
 
   @Test
-  @throws[Exception]
   def testPushChromeVapid(): Unit = {
-    val endpoint = "https://fcm.googleapis.com/fcm/send/e2RHVhnaV2c:APA91bGpDxd6icb8F6eLLFnRvRslrO76pDJ7hvAcEJ6wV6gtA55nO3KAv8aOgxkuBQZzQb8H8BGEz7xALA717ZMvgW2ejjOsFCkeCcTw8FCcYZ0Db3dFKrJFerZ9cQeznl1A1uRxos5b"
-    val encodedUserAuth = "mjj26aedI45B2WKB3kA5Ag=="
-    val encodedUserPublicKey = "BDhYjjf4Vai_7K5Fnk5Fj2k5Q_P_VBCBbXi4xiYi-vQsBmEQax_eDLecS2-VpAilzdeJ9iuOoIpodtvxdGJZYE4="
-
-    // Base64 string server public/private key
-    val vapidPublicKey = "BJXsuKNd1fxVbUEHVeN3nDdnd3+WlKETa1H4P0+JqYCozY1RroOh7XFyhQgcduEiQeA4K7ZUvayM3Wb+OcqUKxE="
-    val vapidPrivateKey = "ANswHZjcOe7BhuMXSSzo6MzS9kD86dGTCaGyjj7fUb3C"
-    // Converting to other data types...
-    val userPublicKey = Utils.loadPublicKey(encodedUserPublicKey)
-    val userAuth = Utils.base64Decode(encodedUserAuth)
-    // Construct notification
-    val notification = new Notification(endpoint, userPublicKey, userAuth, "chrome vapid".getBytes)
-    // Construct push service
-    val pushService = new PushService
-    val httpResponse = pushService.send(
-      notification = notification,
-      publicKey = Utils.loadPublicKey(vapidPublicKey),
-      privateKey = Utils.loadPrivateKey(vapidPrivateKey)
-    )
-    // Send notification!
-    println(httpResponse.getStatusLine.getStatusCode)
-    println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
+    PushServiceTest.doTest(ChromeTest.param)
   }
 
 }
