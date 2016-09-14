@@ -1,5 +1,4 @@
 libraryDependencies ++= Seq(
-  "com.google.guava" % "guava" % "19.0",
   "org.apache.httpcomponents" % "fluent-hc" % "4.5.2",
   "commons-io" % "commons-io" % "2.5",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.54",

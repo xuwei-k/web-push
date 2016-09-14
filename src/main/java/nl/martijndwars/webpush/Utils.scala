@@ -1,6 +1,6 @@
 package nl.martijndwars.webpush
 
-import com.google.common.io.BaseEncoding
+import org.apache.commons.codec.binary.Base64
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.interfaces.ECPrivateKey
 import org.bouncycastle.jce.interfaces.ECPublicKey
@@ -8,6 +8,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECPrivateKeySpec
 import org.bouncycastle.jce.spec.ECPublicKeySpec
 import java.math.BigInteger
+import java.nio.charset.StandardCharsets
 import java.security._
 import java.security.spec.InvalidKeySpecException
 
@@ -24,10 +25,10 @@ object Utils {
     */
   def base64Decode(base64Encoded: String): Array[Byte] = {
     if (base64Encoded.contains("+") || base64Encoded.contains("/")) {
-      BaseEncoding.base64.decode(base64Encoded)
+      Base64.decodeBase64(base64Encoded)
     }
     else {
-      BaseEncoding.base64Url.decode(base64Encoded)
+      new Base64(true).decode(base64Encoded.getBytes(StandardCharsets.UTF_8))
     }
   }
 

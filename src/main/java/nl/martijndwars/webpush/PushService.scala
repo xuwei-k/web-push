@@ -1,6 +1,6 @@
 package nl.martijndwars.webpush
 
-import com.google.common.io.BaseEncoding
+import org.apache.commons.codec.binary.Base64
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.ByteArrayEntity
@@ -11,6 +11,7 @@ import org.bouncycastle.jce.interfaces.ECPublicKey
 import org.jose4j.jws.AlgorithmIdentifiers
 import org.jose4j.jws.JsonWebSignature
 import org.jose4j.jwt.JwtClaims
+import java.nio.charset.StandardCharsets
 import java.security._
 
 object PushService {
@@ -33,6 +34,9 @@ object PushService {
     val ciphertext = httpEce.encrypt(buffer, salt, null, "server-key-id", userPublicKey, userAuth)
     new Encrypted(publicKey = serverKey.getPublic, salt = salt, ciphertext = ciphertext)
   }
+
+  private def encodeBase64(bytes: Array[Byte]): String =
+    new String(Base64.encodeBase64(bytes), StandardCharsets.UTF_8)
 }
 
 final class PushService {
@@ -41,7 +45,7 @@ final class PushService {
     * Send a notification
     */
   def send(notification: Notification, publicKey: PublicKey, privateKey: Key, subject: Option[String] = None): HttpResponse = {
-    val base64url = BaseEncoding.base64Url
+
     val encrypted: Encrypted = PushService.encrypt(
       buffer = notification.payload,
       userPublicKey =  notification.userPublicKey,
@@ -55,8 +59,8 @@ final class PushService {
     if (notification.hasPayload) {
       headers.put("Content-Type", "application/octet-stream")
       headers.put("Content-Encoding", "aesgcm")
-      headers.put("Encryption", "keyid=p256dh;salt=" + base64url.omitPadding.encode(salt))
-      headers.put("Crypto-Key", "keyid=p256dh;dh=" + base64url.encode(dh))
+      headers.put("Encryption", "keyid=p256dh;salt=" + Base64.encodeBase64URLSafeString(salt))
+      headers.put("Crypto-Key", "keyid=p256dh;dh=" + PushService.encodeBase64(dh))
       httpPost.setEntity(new ByteArrayEntity(encrypted.ciphertext.value))
     }
 
@@ -73,10 +77,10 @@ final class PushService {
     headers.put("Authorization", "Bearer " + jws.getCompactSerialization)
     val pk = Utils.savePublicKey(publicKey.asInstanceOf[ECPublicKey])
     if (headers.containsKey("Crypto-Key")) {
-      headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + base64url.omitPadding.encode(pk))
+      headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + Base64.encodeBase64URLSafeString(pk))
     }
     else {
-      headers.put("Crypto-Key", "p256ecdsa=" + base64url.encode(pk))
+      headers.put("Crypto-Key", "p256ecdsa=" + PushService.encodeBase64(pk))
     }
 
     import scala.collection.JavaConverters._
