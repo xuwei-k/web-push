@@ -1,12 +1,12 @@
 package nl.martijndwars.webpush
 
-import org.apache.commons.io.IOUtils
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.BeforeClass
 import org.junit.Test
 import java.nio.charset.StandardCharsets
 import java.security.Security
 import nl.martijndwars.webpush.PushServiceTest.TestParam
+import scala.io.Source
 
 object PushServiceTest{
   @BeforeClass def addSecurityProvider(): Unit = {
@@ -36,7 +36,8 @@ object PushServiceTest{
       privateKey = Utils.loadPrivateKey(param.vapidPrivateKey)
     )
     println(httpResponse.getStatusLine.getStatusCode)
-    println(IOUtils.toString(httpResponse.getEntity.getContent, StandardCharsets.UTF_8))
+    val body = Source.fromInputStream(httpResponse.getEntity.getContent, "UTF-8").mkString
+    println(body)
   }
 
 }
