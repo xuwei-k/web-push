@@ -94,7 +94,7 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.5.2'
 
     // For turning InputStream to String
-    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    testCompile group: 'commons-io', name: 'commons-io', version: '2.5'
 
     // Not sure what for..
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
