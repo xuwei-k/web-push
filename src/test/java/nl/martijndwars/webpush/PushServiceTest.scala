@@ -6,7 +6,9 @@ import org.junit.Test
 import java.nio.charset.StandardCharsets
 import java.security.Security
 import nl.martijndwars.webpush.PushServiceTest.TestParam
-import scala.io.Source
+import org.asynchttpclient.DefaultAsyncHttpClient
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 object PushServiceTest{
   @BeforeClass def addSecurityProvider(): Unit = {
@@ -22,6 +24,14 @@ object PushServiceTest{
     payload: String
   )
 
+  def using[A <: AutoCloseable, B](resource: A)(f: A => B): B = {
+    try {
+      f(resource)
+    } finally {
+      resource.close()
+    }
+  }
+
   def doTest(param: TestParam): Unit = {
     // Converting to other data types...
     val userPublicKey = Utils.loadPublicKey(param.userPublicKey)
@@ -29,15 +39,17 @@ object PushServiceTest{
     // Construct notification
     val notification = new Notification(param.endpoint, userPublicKey, userAuth, param.payload.getBytes(StandardCharsets.UTF_8))
     // Construct push service
-    val pushService = new PushService
-    val httpResponse = pushService.send(
-      notification = notification,
-      publicKey = Utils.loadPublicKey(param.vapidPublicKey),
-      privateKey = Utils.loadPrivateKey(param.vapidPrivateKey)
-    )
-    println(httpResponse.getStatusLine.getStatusCode)
-    val body = Source.fromInputStream(httpResponse.getEntity.getContent, "UTF-8").mkString
-    println(body)
+    val client = new DefaultAsyncHttpClient()
+    using(WebpushService.create(client)) { pushService =>
+      val future = pushService.send(
+        notification = notification,
+        publicKey = Utils.loadPublicKey(param.vapidPublicKey),
+        privateKey = Utils.loadPrivateKey(param.vapidPrivateKey)
+      )
+      val response = Await.result(future, 3.seconds)
+      println(response.getStatusText)
+      println(response.getResponseBody)
+    }
   }
 
 }
