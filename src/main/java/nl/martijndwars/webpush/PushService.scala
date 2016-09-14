@@ -42,7 +42,7 @@ final class PushService {
     */
   def send(notification: Notification, publicKey: PublicKey, privateKey: Key, subject: Option[String] = None): HttpResponse = {
     val base64url = BaseEncoding.base64Url
-    val encrypted: Encrypted = PushService.encrypt(
+    val encrypted = PushService.encrypt(
       buffer = notification.payload,
       userPublicKey =  notification.userPublicKey,
       userAuth = notification.userAuth

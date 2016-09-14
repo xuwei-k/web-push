@@ -53,7 +53,7 @@ object Utils {
   @throws[NoSuchAlgorithmException]
   @throws[InvalidKeySpecException]
   def loadPrivateKey(encodedPrivateKey: String): PrivateKey = {
-    val decodedPrivateKey: Array[Byte] = base64Decode(encodedPrivateKey)
+    val decodedPrivateKey = base64Decode(encodedPrivateKey)
     // prime256v1 is NIST P-256
     val params = ECNamedCurveTable.getParameterSpec("prime256v1")
     val prvkey = new ECPrivateKeySpec(new BigInteger(decodedPrivateKey), params)

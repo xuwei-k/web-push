@@ -57,7 +57,7 @@ object HttpEce {
     * Future versions might require a null-terminated info string?
     */
   private def buildInfo(`type`: String, context: Array[Byte]): Array[Byte] = {
-    val buffer: ByteBuffer = ByteBuffer.allocate(19 + `type`.length + context.length)
+    val buffer = ByteBuffer.allocate(19 + `type`.length + context.length)
     buffer.put("Content-Encoding: ".getBytes, 0, 18)
     buffer.put(`type`.getBytes, 0, `type`.length)
     buffer.put(new Array[Byte](1), 0, 1)
