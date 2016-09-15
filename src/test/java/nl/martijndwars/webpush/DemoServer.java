@@ -7,13 +7,13 @@ import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 
 public class DemoServer {
-    public DemoServer() throws Exception {
-        Server server = new Server(8081);
+    public DemoServer(int port) throws Exception {
+        Server server = new Server(port);
 
         ResourceHandler resourceHandler = new ResourceHandler();
         resourceHandler.setDirectoriesListed(true);
-        resourceHandler.setWelcomeFiles(new String[]{"index.html"});
-        resourceHandler.setResourceBase("src/test/resources");
+        resourceHandler.setWelcomeFiles(new String[]{"src/test/resources/demo/index.html"});
+        resourceHandler.setResourceBase("src/test/resources/demo");
 
         HandlerList handlerList = new HandlerList();
         handlerList.setHandlers(new Handler[]{resourceHandler, new DefaultHandler()});
@@ -21,6 +21,5 @@ public class DemoServer {
         server.setHandler(handlerList);
 
         server.start();
-        server.join();
     }
 }

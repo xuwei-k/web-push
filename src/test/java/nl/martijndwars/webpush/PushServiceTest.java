@@ -1,6 +1,7 @@
 package nl.martijndwars.webpush;
 
 import com.google.common.base.Predicate;
+import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -13,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -176,12 +178,13 @@ public class PushServiceTest {
     @Test
     public void testWithSeleniumFireFox() throws Exception {
         // FF 47 and above requires MarionetteDriver
-        MarionetteDriverManager.getInstance().setup();
+        //MarionetteDriverManager.getInstance().setup();
 
         // Open the page
         // https://github.com/SeleniumHQ/selenium/blob/master/java/client/src/org/openqa/selenium/firefox/MarionetteDriver.java#L31
 
         // None of these seem to work..
+        /*
         FirefoxProfile firefoxProfile = new FirefoxProfile();
         firefoxProfile.setPreference("security.turn_off_all_security_so_that_viruses_can_take_over_this_computer", true);
         firefoxProfile.setPreference("dom.push.testing.ignorePermission", true);
@@ -193,8 +196,17 @@ public class PushServiceTest {
         desiredCapabilities.setCapability("marionette", true);
 
         WebDriver webDriver = new FirefoxDriver(desiredCapabilities);
+        */
+
+        ChromeDriverManager.getInstance().setup();
+
+        DesiredCapabilities desiredCapabilities = DesiredCapabilities.chrome();
+        desiredCapabilities.setCapability("marionette", true);
+
+        WebDriver webDriver = new ChromeDriver(desiredCapabilities);
 
         //WebDriver webDriver = new MarionetteDriver();
+
         webDriver.get("http://localhost:8081/");
 
         // Wait until the subscription is set
@@ -227,9 +239,10 @@ public class PushServiceTest {
 
         // Construct push service
         PushService pushService = new PushService();
+        pushService.setGcmApiKey("AIzaSyDSa2bw0b0UGOmkZRw-dqHGQRI_JqpiHug");
         pushService.send(notification);
 
         // Close the browser
-        webDriver.quit();
+        //webDriver.quit();
     }
 }
