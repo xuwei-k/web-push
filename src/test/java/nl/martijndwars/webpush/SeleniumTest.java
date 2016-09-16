@@ -10,11 +10,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -22,6 +22,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Security;
@@ -81,7 +82,14 @@ public class SeleniumTest {
         MarionetteDriverManager.getInstance().setup();
     }
 
-    protected WebDriver getChromeDriver() {
+    /**
+     * Get a ChromeWebDriver. In a CI environment, a RemoteDriver for Saucylabs
+     * is returned. Otherwise, a ChromeDriver is returned.
+     *
+     * @return
+     * @throws MalformedURLException
+     */
+    private WebDriver getChromeDriver() throws MalformedURLException {
         Map<String, Object> map = new HashMap<>();
         map.put("profile.default_content_settings.popups", 0);
         map.put("profile.default_content_setting_values.notifications", 1);
@@ -90,13 +98,30 @@ public class SeleniumTest {
         chromeOptions.setExperimentalOption("prefs", map);
 
         DesiredCapabilities desiredCapabilities = DesiredCapabilities.chrome();
-        desiredCapabilities.setCapability("marionette", true);
         desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
 
-        return new ChromeDriver(desiredCapabilities);
+        if (isCI()) {
+            desiredCapabilities.setCapability("version", "52.0");
+
+            desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
+            desiredCapabilities.setCapability("tags", System.getenv("CI"));
+
+            return new RemoteWebDriver(new URL(REMOTE_DRIVER_URL), desiredCapabilities);
+        } else {
+            desiredCapabilities.setCapability("marionette", true);
+
+            return new ChromeDriver(desiredCapabilities);
+        }
     }
 
-    protected WebDriver getFireFoxDriver() throws URISyntaxException {
+    /**
+     * Get a FirefoxDriver. In a CI environment, a RemoteDriver for Saucylabs
+     * is returned. Otherwise, a FirefoxDriver is returned.
+     *
+     * @return
+     * @throws MalformedURLException
+     */
+    private WebDriver getFireFoxDriver() throws URISyntaxException, MalformedURLException {
         // This doesn't work in FireFox 48, so we include a full profile that allows notifications on localhost:8081 instead (see below)
         //FirefoxProfile firefoxProfile = new FirefoxProfile();
         //firefoxProfile.setPreference("notification.prompt.testing", false);
@@ -111,10 +136,15 @@ public class SeleniumTest {
         DesiredCapabilities desiredCapabilities = DesiredCapabilities.firefox();
         desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
 
-        // This binary is ignored, and it just startes the default version???
-        FirefoxBinary firefoxBinary = new FirefoxBinary(new File("/tmp/browsers/firefox/firefox-beta-latest/Firefox.app/Contents/MacOS/firefox"));
+        if (isCI()) {
+            desiredCapabilities.setCapability("version", "48.0");
+            desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
+            desiredCapabilities.setCapability("tags", System.getenv("CI"));
 
-        return new FirefoxDriver(firefoxBinary, null, desiredCapabilities);
+            return new RemoteWebDriver(new URL(REMOTE_DRIVER_URL), desiredCapabilities);
+        } else {
+            return new FirefoxDriver(desiredCapabilities);
+        }
     }
 
     /**
@@ -123,20 +153,21 @@ public class SeleniumTest {
      * @param webDriver
      * @throws Exception
      */
-    public String[] getSubscription(WebDriver webDriver) throws Exception {
+    private String[] getSubscription(WebDriver webDriver) throws Exception {
         // Wait until the subscription is set
-        (new WebDriverWait(webDriver, 10L)).until(new Predicate<WebDriver>() {
+        (new WebDriverWait(webDriver, 20L)).until(new Predicate<WebDriver>() {
             @Override
             public boolean apply(WebDriver webDriver) {
-                return ((JavascriptExecutor) webDriver)
-                    .executeScript("return window.subscription != null")
-                    .equals(true);
+                WebElement textarea = webDriver.findElement(By.id("subscription"));
+
+                return !textarea.getAttribute("value").equals("");
             }
         });
 
-        // Get subscription from browser
-        JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
-        String subscriptionJson = (String) javascriptExecutor.executeScript("return window.subscription");
+        // Get subscription
+        WebElement textarea = webDriver.findElement(By.id("subscription"));
+
+        String subscriptionJson = textarea.getAttribute("value");
 
         // Extract data from JSON string
         JSONObject subscription = new JSONObject(subscriptionJson);
@@ -153,26 +184,7 @@ public class SeleniumTest {
 
     @Test
     public void testChromeNoVapid() throws Exception {
-        if (isCI()) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("profile.default_content_settings.popups", 0);
-            map.put("profile.default_content_setting_values.notifications", 1);
-
-            ChromeOptions chromeOptions = new ChromeOptions();
-            chromeOptions.setExperimentalOption("prefs", map);
-
-            DesiredCapabilities desiredCapabilities = DesiredCapabilities.chrome();
-            desiredCapabilities.setCapability("version", "52.0");
-            desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
-
-            desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
-            desiredCapabilities.setCapability("tags", System.getenv("CI"));
-
-            webDriver = new RemoteWebDriver(new URL(REMOTE_DRIVER_URL), desiredCapabilities);
-        } else {
-            webDriver = getChromeDriver();
-        }
-
+        webDriver = getChromeDriver();
         webDriver.get(SERVER_URL);
 
         String[] subscription = getSubscription(webDriver);
@@ -197,21 +209,7 @@ public class SeleniumTest {
 
     @Test
     public void testFireFoxNoVapid() throws Exception {
-        if (isCI()) {
-            FirefoxProfile firefoxProfile = new FirefoxProfile(new File(this.getClass().getClassLoader().getResource("firefox").toURI()));
-
-            DesiredCapabilities desiredCapabilities = DesiredCapabilities.firefox();
-            desiredCapabilities.setCapability("version", "48.0");
-            desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
-
-            desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
-            desiredCapabilities.setCapability("tags", System.getenv("CI"));
-
-            webDriver = new RemoteWebDriver(new URL(REMOTE_DRIVER_URL), desiredCapabilities);
-        } else {
-            webDriver = getFireFoxDriver();
-        }
-
+        webDriver = getFireFoxDriver();
         webDriver.get(SERVER_URL);
 
         String[] subscription = getSubscription(webDriver);
@@ -257,7 +255,7 @@ public class SeleniumTest {
 
     @After
     public void tearDown() throws InterruptedException {
-        // Leave the browser open, so we actually get the notification. Should be automated at some point..
+        // Leave the browser open, so we actually see the notification arriving. Should be automated at some point..
         Thread.sleep(5000);
 
         if (webDriver != null) {
