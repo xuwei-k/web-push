@@ -10,9 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -158,16 +156,16 @@ public class SeleniumTest {
         (new WebDriverWait(webDriver, 20L)).until(new Predicate<WebDriver>() {
             @Override
             public boolean apply(WebDriver webDriver) {
-                WebElement textarea = webDriver.findElement(By.id("subscription"));
-
-                return !textarea.getAttribute("value").equals("");
+                return ((JavascriptExecutor) webDriver)
+                    .executeScript("return document.getElementById('subscription').value != ''")
+                    .equals(true);
             }
         });
 
         // Get subscription
-        WebElement textarea = webDriver.findElement(By.id("subscription"));
+        JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
 
-        String subscriptionJson = textarea.getAttribute("value");
+        String subscriptionJson = (String) javascriptExecutor.executeScript("return document.getElementById('subscription').value");
 
         // Extract data from JSON string
         JSONObject subscription = new JSONObject(subscriptionJson);
