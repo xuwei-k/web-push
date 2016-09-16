@@ -153,7 +153,7 @@ public class SeleniumTest {
 
     @Test
     public void testChromeNoVapid() throws Exception {
-        if (Objects.equals(System.getenv("CI"), "true") || true) {
+        if (isCI()) {
             Map<String, Object> map = new HashMap<>();
             map.put("profile.default_content_settings.popups", 0);
             map.put("profile.default_content_setting_values.notifications", 1);
@@ -197,7 +197,20 @@ public class SeleniumTest {
 
     @Test
     public void testFireFoxNoVapid() throws Exception {
-        webDriver = getFireFoxDriver();
+        if (isCI()) {
+            FirefoxProfile firefoxProfile = new FirefoxProfile(new File(this.getClass().getClassLoader().getResource("firefox").toURI()));
+
+            DesiredCapabilities desiredCapabilities = DesiredCapabilities.firefox();
+            desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
+
+            desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
+            desiredCapabilities.setCapability("tags", System.getenv("CI"));
+
+            webDriver = new RemoteWebDriver(new URL(REMOTE_DRIVER_URL), desiredCapabilities);
+        } else {
+            webDriver = getFireFoxDriver();
+        }
+
         webDriver.get(SERVER_URL);
 
         String[] subscription = getSubscription(webDriver);
@@ -217,6 +230,15 @@ public class SeleniumTest {
         HttpResponse httpResponse = pushService.send(notification);
 
         assert (httpResponse.getStatusLine().getStatusCode() == 201);
+    }
+
+    /**
+     * Check if we are running as CI
+     *
+     * @return
+     */
+    private boolean isCI() {
+        return Objects.equals(System.getenv("CI"), "true");
     }
 
     /**
