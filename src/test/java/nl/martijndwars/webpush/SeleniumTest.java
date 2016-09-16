@@ -3,7 +3,6 @@ package nl.martijndwars.webpush;
 import com.google.common.base.Predicate;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.MarionetteDriverManager;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONObject;
@@ -11,7 +10,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -19,15 +17,17 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class SeleniumTest {
     /**
@@ -39,6 +39,21 @@ public class SeleniumTest {
      * URL of the server that serves the demo application.
      */
     private static String SERVER_URL = "http://localhost:" + SERVER_PORT + "/index.html";
+
+    /**
+     * Saucylabs username
+     */
+    private static String USERNAME = "martijndwars";
+
+    /**
+     * Saucylabs access key
+     */
+    private static String ACCESS_KEY = "58a41adf-8c77-45df-8ef5-40903ce13c81";
+
+    /**
+     * Saucylabs remote URL
+     */
+    private static String REMOTE_DRIVER_URL = "http://" + USERNAME + ":" + ACCESS_KEY + "@ondemand.saucelabs.com:80/wd/hub";
 
     /**
      * The WebDriver instance used for the test.
@@ -129,7 +144,7 @@ public class SeleniumTest {
         String userAuthBase64 = subscription.getJSONObject("keys").getString("auth");
         String userPublicKeyBase64 = subscription.getJSONObject("keys").getString("p256dh");
 
-        return new String[] {
+        return new String[]{
             endpoint,
             userAuthBase64,
             userPublicKeyBase64
@@ -138,7 +153,26 @@ public class SeleniumTest {
 
     @Test
     public void testChromeNoVapid() throws Exception {
-        webDriver = getChromeDriver();
+        if (Objects.equals(System.getenv("CI"), "true") || true) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("profile.default_content_settings.popups", 0);
+            map.put("profile.default_content_setting_values.notifications", 1);
+
+            ChromeOptions chromeOptions = new ChromeOptions();
+            chromeOptions.setExperimentalOption("prefs", map);
+
+            DesiredCapabilities desiredCapabilities = DesiredCapabilities.chrome();
+            desiredCapabilities.setCapability("version", "52.0");
+            desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
+
+            desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
+            desiredCapabilities.setCapability("tags", System.getenv("CI"));
+
+            webDriver = new RemoteWebDriver(new URL(REMOTE_DRIVER_URL), desiredCapabilities);
+        } else {
+            webDriver = getChromeDriver();
+        }
+
         webDriver.get(SERVER_URL);
 
         String[] subscription = getSubscription(webDriver);
