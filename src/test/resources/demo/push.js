@@ -66,7 +66,7 @@ function sendSubscriptionToServer(subscription) {
     var key = subscription.getKey ? subscription.getKey('p256dh') : '';
     var auth = subscription.getKey ? subscription.getKey('auth') : '';
 
-    window.subscription = JSON.stringify(subscription);
+    document.getElementById('subscription').value = JSON.stringify(subscription);
 
     console.log({
         endpoint: subscription.endpoint,
