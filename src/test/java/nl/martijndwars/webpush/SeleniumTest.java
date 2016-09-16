@@ -125,7 +125,7 @@ public class SeleniumTest {
      */
     public String[] getSubscription(WebDriver webDriver) throws Exception {
         // Wait until the subscription is set
-        (new WebDriverWait(webDriver, 100L)).until(new Predicate<WebDriver>() {
+        (new WebDriverWait(webDriver, 10L)).until(new Predicate<WebDriver>() {
             @Override
             public boolean apply(WebDriver webDriver) {
                 return ((JavascriptExecutor) webDriver)
@@ -201,6 +201,7 @@ public class SeleniumTest {
             FirefoxProfile firefoxProfile = new FirefoxProfile(new File(this.getClass().getClassLoader().getResource("firefox").toURI()));
 
             DesiredCapabilities desiredCapabilities = DesiredCapabilities.firefox();
+            desiredCapabilities.setCapability("version", "48.0");
             desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
 
             desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
@@ -259,6 +260,8 @@ public class SeleniumTest {
         // Leave the browser open, so we actually get the notification. Should be automated at some point..
         Thread.sleep(5000);
 
-        webDriver.quit();
+        if (webDriver != null) {
+            webDriver.quit();
+        }
     }
 }

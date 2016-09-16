@@ -2,6 +2,13 @@
 
 A Web Push library for Java 7. Supports payloads and VAPID.
 
+[![Build Status](https://travis-ci.org/MartijnDwars/web-push.svg?branch=master)](https://travis-ci.org/MartijnDwars/web-push)
+[![Build Status](https://saucelabs.com/buildstatus/martijndwars)](https://saucelabs.com/beta/builds/a1930c691f6143beb5b74a34eb62f516)
+
+## Browser Matrix
+
+[![Build Status](https://saucelabs.com/browser-matrix/martijndwars.svg)](https://saucelabs.com/beta/builds/a1930c691f6143beb5b74a34eb62f516)
+
 ## Installation
 
 For Gradle, add the following dependency to `build.gradle`:
