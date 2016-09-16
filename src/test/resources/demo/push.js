@@ -1,26 +1,28 @@
 window.addEventListener('load', registerServiceWorker, false);
 
 function registerServiceWorker() {
+    document.write('Loaded');
+    
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(initialiseState);
     } else {
-        console.warn('Service workers are not supported in this browser.');
+        document.write('Service workers are not supported in this browser.');
     }
 }
 
 function initialiseState() {
     if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
-        console.warn('Notifications aren\'t supported.');
+        document.write('Notifications aren\'t supported.');
         return;
     }
 
     if (Notification.permission === 'denied') {
-        console.warn('The user has blocked notifications.');
+        document.write('The user has blocked notifications.');
         return;
     }
 
     if (!('PushManager' in window)) {
-        console.warn('Push messaging isn\'t supported.');
+        document.write('Push messaging isn\'t supported.');
         return;
     }
 
@@ -36,7 +38,7 @@ function initialiseState() {
             sendSubscriptionToServer(subscription);
         })
         .catch(function(err) {
-            console.warn('Error during getSubscription()', err);
+            document.write('Error during getSubscription()', err);
         });
     });
 }
@@ -54,9 +56,9 @@ function subscribe() {
         })
         .catch(function (e) {
             if (Notification.permission === 'denied') {
-                console.warn('Permission for Notifications was denied');
+                document.write('Permission for Notifications was denied');
             } else {
-                console.error('Unable to subscribe to push.', e);
+                document.write('Unable to subscribe to push.', e);
             }
         });
     });
