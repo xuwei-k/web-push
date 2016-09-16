@@ -52,7 +52,7 @@ public class SeleniumTest {
     /**
      * Saucylabs remote URL
      */
-    private static String REMOTE_DRIVER_URL = "http://" + USERNAME + ":" + ACCESS_KEY + "@ondemand.saucelabs.com:80/wd/hub";
+    private static String REMOTE_DRIVER_URL = "http://" + USERNAME + ":" + ACCESS_KEY + "@localhost:4445/wd/hub";
 
     /**
      * The WebDriver instance used for the test.
