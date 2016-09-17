@@ -1,8 +1,6 @@
 window.addEventListener('load', registerServiceWorker, false);
 
 function registerServiceWorker() {
-    document.write('Loaded');
-    
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(initialiseState);
     } else {
@@ -48,8 +46,8 @@ function subscribe() {
 
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
         serviceWorkerRegistration.pushManager.subscribe({
-            userVisibleOnly: true,
-            // applicationServerKey: publicKey
+            userVisibleOnly: true//,
+            //applicationServerKey: publicKey
         })
         .then(function (subscription) {
             return sendSubscriptionToServer(subscription);
