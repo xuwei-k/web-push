@@ -6,9 +6,10 @@ import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
@@ -25,7 +26,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -197,7 +197,7 @@ public class SeleniumTest {
     }
 
     @Test
-    public void testChromeNoVapid() throws Exception {
+    public void testChrome() throws Exception {
         webDriver = getChromeDriver();
         webDriver.get(SERVER_URL);
 
@@ -218,10 +218,10 @@ public class SeleniumTest {
 
     @Test
     public void testChromeVapid() throws Exception {
-        KeyPair keyPair = generateVapidKeys();
+        KeyPair keyPair = readVapidKeys();
 
         webDriver = getChromeDriver();
-        webDriver.get(SERVER_URL + "?" + base64Url.encode(Utils.savePublicKey((ECPublicKey) keyPair.getPublic())));
+        webDriver.get(SERVER_URL + "?vapid");
 
         String[] subscription = getSubscription(webDriver);
         String endpoint = subscription[0];
@@ -265,7 +265,7 @@ public class SeleniumTest {
     }
 
     @Test
-    public void testFireFoxNoVapid() throws Exception {
+    public void testFireFox() throws Exception {
         webDriver = getFireFoxDriver();
         webDriver.get(SERVER_URL);
 
@@ -299,15 +299,17 @@ public class SeleniumTest {
     }
 
     /**
-     * Read the public-private keypair from the classpath
+     * Read the public-private key pair from vapid.pem and convert the
+     * BouncyCastle PEMKeyPair to a JCA KeyPair.
      *
      * @return
      */
     private KeyPair readVapidKeys() throws IOException {
-        try (InputStreamReader inputStreamReader = new InputStreamReader(getClass().getResourceAsStream("vapid.pem"))) {
+        try (InputStreamReader inputStreamReader = new InputStreamReader(getClass().getResourceAsStream("/vapid.pem"))) {
             PEMParser pemParser = new PEMParser(inputStreamReader);
+            PEMKeyPair pemKeyPair = (PEMKeyPair) pemParser.readObject();
 
-            return (KeyPair) pemParser.readObject();
+            return new JcaPEMKeyConverter().getKeyPair(pemKeyPair);
         } catch (IOException e) {
             throw new IOException("The private key could not be decrypted", e);
         }
