@@ -1,0 +1,10 @@
+language: java
+
+jdk:
+  - oraclejdk8
+
+addons:
+  sauce_connect:
+    username: "martijndwars"
+    access_key:
+      secure: "bh0vlaG6mzFsn6T7ECnfUgY/XIO3clIb3NK0LWPt0ykLafv48uLSG4f1OpiuZtQKF8t8N57fsv41AMUVRFp+eyV0m/w8riNVlEuA6E7ocIxEa6G1WHN9eM6SiFsIL2OrFfd00Twr7PSvcH8ny1o6aI+eyjmpml62Am3RgeHp66GtCJOH5cFN6gkT7Rf7jfcpCPa0zEAcaghw3ESNA3oO5PdqX272tKCeWY/FPrOGrEe6txJZz6PFJEX0jgz9g1gFVwMNFPLaTXYENyv2ecKvETPEYuSpogGX6qrHkzsLu3ch6/uh/exYSktjIWVMbzl5kMn45t+RwVl+0YBAxpKlJhLwppB7nKhdYi4/atpaW8RyXaowSz33UdEGmPg6LTTuGYdWgGgurWwZqm2LjoMDzHa4DmKEtuvz7wWXSvBtX8tqkqc3gQsY0OoN/Rtsmap0TrLDATPkAzqaZjtbBxlehH8V1ppvPrPFR/3T5CgT/g+o1v6C2bUIdIBUl6HWqyx8TOb+fO+0ONFt+IWEZ8vxm/TM/MtTQzKMreRwxht1ewuS1Kh+wGROrJLB3Cgc2mH/DklPTdwz9wkIXT4YPaDznCFQt24/hg9heFNdEOr0dDtFsFm33FT0yJHdeP2jiCNizcFuH83vmDUHpXevQeG5biKYWKiJPWTVSraKq/tNdng="

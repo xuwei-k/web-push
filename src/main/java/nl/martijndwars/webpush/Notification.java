@@ -2,7 +2,10 @@ package nl.martijndwars.webpush;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 public class Notification {
     /**
@@ -30,7 +33,7 @@ public class Notification {
      */
     private final int ttl;
 
-    public Notification(final String endpoint, final PublicKey userPublicKey, byte[] userAuth, final byte[] payload, int ttl) {
+    public Notification(String endpoint, PublicKey userPublicKey, byte[] userAuth, byte[] payload, int ttl) {
         this.endpoint = endpoint;
         this.userPublicKey = userPublicKey;
         this.userAuth = userAuth;
@@ -38,8 +41,16 @@ public class Notification {
         this.ttl = ttl;
     }
 
-    public Notification(final String endpoint, final PublicKey userPublicKey, byte[] userAuth, final byte[] payload) {
+    public Notification(String endpoint, PublicKey userPublicKey, byte[] userAuth, byte[] payload) {
         this(endpoint, userPublicKey, userAuth, payload, 2419200);
+    }
+
+    public Notification(String endpoint, String userPublicKey, String userAuth, byte[] payload) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
+        this(endpoint, Utils.loadPublicKey(userPublicKey), Utils.base64Decode(userAuth), payload);
+    }
+
+    public Notification(String endpoint, String userPublicKey, String userAuth, String payload) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
+        this(endpoint, Utils.loadPublicKey(userPublicKey), Utils.base64Decode(userAuth), payload.getBytes());
     }
 
     public String getEndpoint() {

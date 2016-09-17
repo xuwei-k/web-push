@@ -16,6 +16,14 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 
 public class Utils {
+    /**
+     * Get the uncompressed encoding of the public key point. The resulting array
+     * should be 65 bytes length and start with 0x04 followed by the x and y
+     * coordinates (32 bytes each).
+     *
+     * @param publicKey
+     * @return
+     */
     public static byte[] savePublicKey(ECPublicKey publicKey) {
         return publicKey.getQ().getEncoded(false);
     }

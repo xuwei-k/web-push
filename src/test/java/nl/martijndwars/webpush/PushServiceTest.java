@@ -1,5 +1,8 @@
 package nl.martijndwars.webpush;
 
+import com.google.common.base.Predicate;
+import io.github.bonigarcia.wdm.ChromeDriverManager;
+import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -9,6 +12,13 @@ import org.jose4j.jwt.JwtClaims;
 import org.json.JSONObject;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
@@ -25,16 +35,12 @@ public class PushServiceTest {
         String endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX1ZgBNvDz6ZIAh6OqNh3hN4ZLEa57oS22mHI70mnvrDbIi-MnJu7FxFzvMV31L_AnIxP_p1Ot47KP8Xmit3XIQjZDjTahqBPmmntWX8JM6AtRxcAHxmXH6KqhyWwL1QEA0jBp";
 
         // Base64 string user public key/auth
-        String encodedUserPublicKey = "BLLgHYo0xlN3GDSrz4g6SpTDLvJv+oFR0FSLLnncXFojvVyoOePpNXaUpsj4s/huAX7zb+qS1Lxo6qNLXNgWN7k=";
-        String encodedUserAuth = "wkbtrbgITbb9qPBVOw3ftw==";
+        String userPublicKey = "BLLgHYo0xlN3GDSrz4g6SpTDLvJv+oFR0FSLLnncXFojvVyoOePpNXaUpsj4s/huAX7zb+qS1Lxo6qNLXNgWN7k=";
+        String userAuth = "wkbtrbgITbb9qPBVOw3ftw==";
 
         // Base64 string server public/private key
         String vapidPublicKey = "BOH8nTQA5iZhl23+NCzGG9prvOZ5BE0MJXBW+GUkQIvRVTVB32JxmX0V1j6z0r7rnT7+bgi6f2g5fMPpAh5brqM=";
         String vapidPrivateKey = "TRlY/7yQzvqcLpgHQTxiU5fVzAAvAw/cdSh5kLFLNqg=";
-
-        // Converting to other data types...
-        PublicKey userPublicKey = Utils.loadPublicKey(encodedUserPublicKey);
-        byte[] userAuth = Utils.base64Decode(encodedUserAuth);
 
         // Construct notification
         Notification notification = new Notification(endpoint, userPublicKey, userAuth, getPayload());
@@ -57,16 +63,12 @@ public class PushServiceTest {
         String endpoint = "https://fcm.googleapis.com/fcm/send/fAAs_rrnDHQ:APA91bHlqjMZzphwP2xckJa9jL0CwtEvlLTL1OEfmRuwqviGLnqQTvMr4WLiwg7jElESXPLYO7qUc5mWvvv-bqs9lRenEbUSL2R191F-quyhE_fZ6JM3giqMQMhAEifDG-s5eHsRPQUG";
 
         // Base64 string user public key/auth
-        String encodedUserPublicKey = "BM9qL254VsQlM8Zi6Hd0khUYSn8075A+td+/DZELdA2L173DIDz42NbjZC51NRfAuVaxh/vT/+UZr37S55EtY7k=";
-        String encodedUserAuth = "KaiGaQKMyCW8qEk2NMJwjA==";
+        String userPublicKey = "BM9qL254VsQlM8Zi6Hd0khUYSn8075A+td+/DZELdA2L173DIDz42NbjZC51NRfAuVaxh/vT/+UZr37S55EtY7k=";
+        String userAuth = "KaiGaQKMyCW8qEk2NMJwjA==";
 
         // Base64 string server public/private key
         String vapidPublicKey = "BOH8nTQA5iZhl23+NCzGG9prvOZ5BE0MJXBW+GUkQIvRVTVB32JxmX0V1j6z0r7rnT7+bgi6f2g5fMPpAh5brqM=";
         String vapidPrivateKey = "TRlY/7yQzvqcLpgHQTxiU5fVzAAvAw/cdSh5kLFLNqg=";
-
-        // Converting to other data types...
-        PublicKey userPublicKey = Utils.loadPublicKey(encodedUserPublicKey);
-        byte[] userAuth = Utils.base64Decode(encodedUserAuth);
 
         // Construct notification
         Notification notification = new Notification(endpoint, userPublicKey, userAuth, getPayload());
@@ -89,12 +91,8 @@ public class PushServiceTest {
         String endpoint = "https://updates.push.services.mozilla.com/wpush/v1/gAAAAABX1Y_lvdzIpzBfRnceQdoNa_DiDy2OH7weXClk5ysidEuoPH8xv0Qq9ADFNTAB4e1TOuT50bbpN-bWVymBqy1b6Mecrz_SHf8Hvh620ViAbL5Zuyp5AqlA7i6g4BGX8h1H23zH";
 
         // Base64 string user public key/auth
-        String encodedUserPublicKey = "BNYbTpyTEUFNK9BacT1rgpx7SXuKkLVKOF0LFnK8mLyPeW3SLk3nmXoPXSCkNKovcKChNxbG+q3mGW9J8JRg+6w=";
-        String encodedUserAuth = "40SZaWpcvu55C+mlWxu0kA==";
-
-        // Converting to other data types...
-        PublicKey userPublicKey = Utils.loadPublicKey(encodedUserPublicKey);
-        byte[] userAuth = Utils.base64Decode(encodedUserAuth);
+        String userPublicKey = "BNYbTpyTEUFNK9BacT1rgpx7SXuKkLVKOF0LFnK8mLyPeW3SLk3nmXoPXSCkNKovcKChNxbG+q3mGW9J8JRg+6w=";
+        String userAuth = "40SZaWpcvu55C+mlWxu0kA==";
 
         // Construct notification
         Notification notification = new Notification(endpoint, userPublicKey, userAuth, getPayload());
@@ -114,12 +112,8 @@ public class PushServiceTest {
         String endpoint = "https://android.googleapis.com/gcm/send/fIYEoSib764:APA91bGLILlBB9XnndQC-fWWM1D-Ji2reiVnRS-sM_kfHQyVssWadi6XRCfd9Dxf74fL6y3-Zaazohhl_W4MCLaqhdr5-WucacYjQS6B5-VyOwYQxzEkU2QABvUUxBcZw91SHYDGmkIt";
 
         // Base64 string user public key/auth
-        String encodedUserPublicKey = "BA7JhUzMirCMHC94XO4ODFb7sYzZPMERp2AFfHLs1Hi1ghdvUfid8dlNseAsXD7LAF+J33X+ViRJ/APpW8cnrko=";
-        String encodedUserAuth = "8wtwPHBdZ7LWY4p4WWJIzA==";
-
-        // Converting to other data types...
-        PublicKey userPublicKey = Utils.loadPublicKey(encodedUserPublicKey);
-        byte[] userAuth = Utils.base64Decode(encodedUserAuth);
+        String userPublicKey = "BA7JhUzMirCMHC94XO4ODFb7sYzZPMERp2AFfHLs1Hi1ghdvUfid8dlNseAsXD7LAF+J33X+ViRJ/APpW8cnrko=";
+        String userAuth = "8wtwPHBdZ7LWY4p4WWJIzA==";
 
         // Construct notification
         Notification notification = new Notification(endpoint, userPublicKey, userAuth, getPayload());

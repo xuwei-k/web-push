@@ -53,7 +53,36 @@ navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
 
 ## Server Side
 
-The server needs both the public and private key. Currently, the library expects these as base64 encoded strings. An easy way to compute the base64 encoding is by using nodejs:
+The server needs both the public and private key. It is up to you how to encode the key. The next two sections provide two alternative ways of doing this.
+
+### Read the PEM directly
+
+Alternatively, you can read the PEM file directly. First add a dependency on BouncyCastle's PKIX API:
+
+`compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.55'`
+
+The PKIX API provides the `openssl` package which you can use to directly read a PEM file:
+
+```java
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+
+...
+
+try (InputStreamReader inputStreamReader = new InputStreamReader(getClass().getResourceAsStream("/vapid.pem"))) {
+    PEMParser pemParser = new PEMParser(inputStreamReader);
+    PEMKeyPair pemKeyPair = (PEMKeyPair) pemParser.readObject();
+
+    return new JcaPEMKeyConverter().getKeyPair(pemKeyPair);
+} catch (IOException e) {
+    throw new IOException("The private key could not be decrypted", e);
+}
+```
+
+### Read as base64 encoded strings
+
+One way to do this is by encoding the public and private key as base64 strings and using `Utils.loadPublicKey` and `Utils.loadPrivateKey` to convert the base64 encoding to `PublicKey` and `PrivateKey` objects. To compute the base64 encoding is by using nodejs:
 
 ```javascript
 > var publicKey = new Buffer([0x04,0xe1,0xfc,0x9d,0x34,0x00,0xe6,0x26,0x61,0x97,0x6d,0xfe,0x34,0x2c,0xc6,0x1b,0xda,0x6b,0xbc,0xe6,0x79,0x04,0x4d,0x0c,0x25,0x70,0x56,0xf8,0x65,0x24,0x40,0x8b,0xd1,0x55,0x35,0x41,0xdf,0x62,0x71,0x99,0x7d,0x15,0xd6,0x3e,0xb3,0xd2,0xbe,0xeb,0x9d,0x3e,0xfe,0x6e,0x08,0xba,0x7f,0x68,0x39,0x7c,0xc3,0xe9,0x02,0x1e,0x5b,0xae,0xa3]);
@@ -72,7 +101,3 @@ Use these strings to configure the `PushService`:
 pushService.setPublicKey(Utils.loadPublicKey("BOH8nTQA5iZhl23+NCzGG9prvOZ5BE0MJXBW+GUkQIvRVTVB32JxmX0V1j6z0r7rnT7+bgi6f2g5fMPpAh5brqM="));
 pushService.setPrivateKey(Utils.loadPrivateKey("TRlY/7yQzvqcLpgHQTxiU5fVzAAvAw/cdSh5kLFLNqg="));
 ```
-
-Alternatively, since the API just expects `PublicKey` and `PrivateKey` instances, you can use BouncyCastle's PKIX API which
-provides the `openssl` package ([installation instructions](http://stackoverflow.com/a/24161337/368220)). You can use this to
-directly read the PEM file you created earlier ([code sample](http://stackoverflow.com/a/1580055/368220)).
