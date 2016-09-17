@@ -100,7 +100,8 @@ public class SeleniumTest {
 
         if (isCI()) {
             desiredCapabilities.setCapability("version", "52.0");
-
+            desiredCapabilities.setCapability("tunnel-identifier", System.getenv("TRAVIS_JOB_NUMBER"));
+            desiredCapabilities.setCapability("name", "Travis #" + System.getenv("TRAVIS_JOB_NUMBER"));
             desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
             desiredCapabilities.setCapability("tags", System.getenv("CI"));
 
@@ -135,6 +136,8 @@ public class SeleniumTest {
         desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
 
         if (isCI()) {
+            desiredCapabilities.setCapability("tunnel-identifier", System.getenv("TRAVIS_JOB_NUMBER"));
+            desiredCapabilities.setCapability("name", "Travis #" + System.getenv("TRAVIS_JOB_NUMBER"));
             desiredCapabilities.setCapability("version", "48.0");
             desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
             desiredCapabilities.setCapability("tags", System.getenv("CI"));
