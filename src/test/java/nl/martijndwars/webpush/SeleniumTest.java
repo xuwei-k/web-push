@@ -245,7 +245,7 @@ public class SeleniumTest {
         KeyPair keyPair = readVapidKeys();
 
         webDriver = getFireFoxDriver();
-        webDriver.get(SERVER_URL + "?" + base64Url.encode(Utils.savePublicKey((ECPublicKey) keyPair.getPublic())));
+        webDriver.get(SERVER_URL + "?vapid");
 
         String[] subscription = getSubscription(webDriver);
         String endpoint = subscription[0];

@@ -112,6 +112,9 @@ dependencies {
 
     testCompile 'org.eclipse.jetty:jetty-server:9.4.0.M1'
 
+    // The PKIX API provides the openssl package (http://stackoverflow.com/a/24161337)
+    testCompile 'org.bouncycastle:bcpkix-jdk15on:1.55'
+
     //testCompile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '2.53.1'
     //testCompile group: 'org.seleniumhq.selenium', name: 'selenium-firefox-driver', version: '2.53.1'
     //testCompile group: 'org.seleniumhq.selenium', name: 'selenium-chrome-driver', version: '2.53.1'
