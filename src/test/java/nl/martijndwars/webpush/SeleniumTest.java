@@ -1,16 +1,21 @@
 package nl.martijndwars.webpush;
 
 import com.google.common.base.Predicate;
+import com.google.common.io.BaseEncoding;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import org.apache.http.HttpResponse;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMParser;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.openqa.selenium.*;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -20,10 +25,13 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.Security;
+import java.security.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -53,6 +61,11 @@ public class SeleniumTest {
      * Saucylabs remote URL
      */
     private static String REMOTE_DRIVER_URL = "http://" + USERNAME + ":" + ACCESS_KEY + "@localhost:4445/wd/hub";
+
+    /**
+     * BaseEncoding service
+     */
+    private static BaseEncoding base64Url = BaseEncoding.base64Url();
 
     /**
      * The WebDriver instance used for the test.
@@ -193,15 +206,58 @@ public class SeleniumTest {
         String userAuthBase64 = subscription[1];
         String userPublicKeyBase64 = subscription[2];
 
-        Notification notification = new Notification(
-            endpoint,
-            Utils.loadPublicKey(userPublicKeyBase64),
-            Utils.base64Decode(userAuthBase64),
-            getPayload()
-        );
+        Notification notification = new Notification(endpoint, userPublicKeyBase64, userAuthBase64, getPayload());
 
         PushService pushService = new PushService();
         pushService.setGcmApiKey("AIzaSyDSa2bw0b0UGOmkZRw-dqHGQRI_JqpiHug");
+
+        HttpResponse httpResponse = pushService.send(notification);
+
+        assert (httpResponse.getStatusLine().getStatusCode() == 201);
+    }
+
+    @Test
+    public void testChromeVapid() throws Exception {
+        KeyPair keyPair = generateVapidKeys();
+
+        webDriver = getChromeDriver();
+        webDriver.get(SERVER_URL + "?" + base64Url.encode(Utils.savePublicKey((ECPublicKey) keyPair.getPublic())));
+
+        String[] subscription = getSubscription(webDriver);
+        String endpoint = subscription[0];
+        String userAuthBase64 = subscription[1];
+        String userPublicKeyBase64 = subscription[2];
+
+        Notification notification = new Notification(endpoint, userPublicKeyBase64, userAuthBase64, getPayload());
+
+        PushService pushService = new PushService();
+        pushService.setPublicKey(keyPair.getPublic());
+        pushService.setPrivateKey(keyPair.getPrivate());
+        pushService.setSubject("mailto:admin@domain.com");
+
+        HttpResponse httpResponse = pushService.send(notification);
+
+        assert (httpResponse.getStatusLine().getStatusCode() == 201);
+    }
+
+    @Test
+    public void testFireFoxVapid() throws Exception {
+        KeyPair keyPair = readVapidKeys();
+
+        webDriver = getFireFoxDriver();
+        webDriver.get(SERVER_URL + "?" + base64Url.encode(Utils.savePublicKey((ECPublicKey) keyPair.getPublic())));
+
+        String[] subscription = getSubscription(webDriver);
+        String endpoint = subscription[0];
+        String userAuthBase64 = subscription[1];
+        String userPublicKeyBase64 = subscription[2];
+
+        Notification notification = new Notification(endpoint, userPublicKeyBase64, userAuthBase64, getPayload());
+
+        PushService pushService = new PushService();
+        pushService.setPublicKey(keyPair.getPublic());
+        pushService.setPrivateKey(keyPair.getPrivate());
+        pushService.setSubject("mailto:admin@domain.com");
 
         HttpResponse httpResponse = pushService.send(notification);
 
@@ -218,18 +274,43 @@ public class SeleniumTest {
         String userAuthBase64 = subscription[1];
         String userPublicKeyBase64 = subscription[2];
 
-        Notification notification = new Notification(
-            endpoint,
-            Utils.loadPublicKey(userPublicKeyBase64),
-            Utils.base64Decode(userAuthBase64),
-            getPayload()
-        );
+        Notification notification = new Notification(endpoint, userPublicKeyBase64, userAuthBase64, getPayload());
 
         PushService pushService = new PushService();
 
         HttpResponse httpResponse = pushService.send(notification);
 
         assert (httpResponse.getStatusLine().getStatusCode() == 201);
+    }
+
+    /**
+     * Generate a public-private keypair on the prime256v1 curve.
+     *
+     * @return
+     * @throws NoSuchProviderException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidAlgorithmParameterException
+     */
+    private KeyPair generateVapidKeys() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC");
+        keyPairGenerator.initialize(ECNamedCurveTable.getParameterSpec("prime256v1"), new SecureRandom());
+
+        return keyPairGenerator.generateKeyPair();
+    }
+
+    /**
+     * Read the public-private keypair from the classpath
+     *
+     * @return
+     */
+    private KeyPair readVapidKeys() throws IOException {
+        try (InputStreamReader inputStreamReader = new InputStreamReader(getClass().getResourceAsStream("vapid.pem"))) {
+            PEMParser pemParser = new PEMParser(inputStreamReader);
+
+            return (KeyPair) pemParser.readObject();
+        } catch (IOException e) {
+            throw new IOException("The private key could not be decrypted", e);
+        }
     }
 
     /**
@@ -246,12 +327,12 @@ public class SeleniumTest {
      *
      * @return
      */
-    private byte[] getPayload() {
+    private String getPayload() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.append("title", "Hello");
         jsonObject.append("message", "World");
 
-        return jsonObject.toString().getBytes();
+        return jsonObject.toString();
     }
 
     @After

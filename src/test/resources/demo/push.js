@@ -26,40 +26,66 @@ function initialiseState() {
 
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
         serviceWorkerRegistration.pushManager.getSubscription().then(function (subscription) {
-            if (!subscription) {
-                subscribe();
-                
-                return;
-            }
-            
-            // Keep your server in sync with the latest subscriptionId
-            sendSubscriptionToServer(subscription);
-        })
-        .catch(function(err) {
-            document.write('Error during getSubscription()', err);
-        });
+                if (!subscription) {
+                    subscribe();
+
+                    return;
+                }
+
+                // Keep your server in sync with the latest subscriptionId
+                sendSubscriptionToServer(subscription);
+            })
+            .catch(function (err) {
+                document.write('Error during getSubscription()', err);
+            });
     });
 }
 
 function subscribe() {
-    const publicKey = new Uint8Array([0x04,0xe1,0xfc,0x9d,0x34,0x00,0xe6,0x26,0x61,0x97,0x6d,0xfe,0x34,0x2c,0xc6,0x1b,0xda,0x6b,0xbc,0xe6,0x79,0x04,0x4d,0x0c,0x25,0x70,0x56,0xf8,0x65,0x24,0x40,0x8b,0xd1,0x55,0x35,0x41,0xdf,0x62,0x71,0x99,0x7d,0x15,0xd6,0x3e,0xb3,0xd2,0xbe,0xeb,0x9d,0x3e,0xfe,0x6e,0x08,0xba,0x7f,0x68,0x39,0x7c,0xc3,0xe9,0x02,0x1e,0x5b,0xae,0xa3]);
-
     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-        serviceWorkerRegistration.pushManager.subscribe({
-            userVisibleOnly: true//,
-            //applicationServerKey: publicKey
-        })
-        .then(function (subscription) {
-            return sendSubscriptionToServer(subscription);
-        })
-        .catch(function (e) {
-            if (Notification.permission === 'denied') {
-                document.write('Permission for Notifications was denied');
-            } else {
-                document.write('Unable to subscribe to push.', e);
-            }
-        });
+        serviceWorkerRegistration.pushManager.subscribe(getOptions())
+            .then(function (subscription) {
+                return sendSubscriptionToServer(subscription);
+            })
+            .catch(function (e) {
+                if (Notification.permission === 'denied') {
+                    document.write('Permission for Notifications was denied');
+                } else {
+                    document.write('Unable to subscribe to push.', e);
+                }
+            });
     });
+}
+
+/**
+ * Get the VAPID public key from the URL if present and return an options
+ * object for a call to PushManager.subscribe.
+ *
+ * @returns {*}
+ */
+function getOptions() {
+    if (window.location.search != '') {
+        // Strip off the question mark
+        var publicKeyBase64Url = window.location.search.substring(1);
+
+        // Turn url-safe base64 to normal base64
+        var publicKeyBase64 = publicKeyBase64Url
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+
+        var publicKey = new Uint8Array(atob(publicKeyBase64).split("").map(function (c) {
+            return c.charCodeAt(0);
+        }));
+
+        return {
+            userVisibleOnly: true,
+            applicationServerKey: publicKey
+        };
+    } else {
+        return {
+            userVisibleOnly: true
+        };
+    }
 }
 
 function sendSubscriptionToServer(subscription) {
