@@ -102,11 +102,11 @@ dependencies {
     // For creating and signing JWT
     compile group: 'org.bitbucket.b_c', name: 'jose4j', version: '0.5.2'
 
-
+    
     // For testing, obviously
     testCompile group: 'junit', name: 'junit', version: '4.11'
 
-    // For encoding JSON
+    // For parsing and unparsing JSON
     testCompile group: 'org.json', name: 'json', version: '20160212'
 
     // For turning InputStream to String

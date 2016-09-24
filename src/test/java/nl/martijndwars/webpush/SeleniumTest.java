@@ -11,10 +11,7 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -196,6 +193,29 @@ public class SeleniumTest {
         };
     }
 
+    /**
+     * Wait until the messages arrives and get it.
+     *
+     * @param webDriver
+     * @throws Exception
+     */
+    private String getMessage(WebDriver webDriver) throws Exception {
+        // Wait until the message is set
+        (new WebDriverWait(webDriver, 30L)).until(new Predicate<WebDriver>() {
+            @Override
+            public boolean apply(WebDriver webDriver) {
+                return ((JavascriptExecutor) webDriver)
+                    .executeScript("return document.getElementById('message').value != ''")
+                    .equals(true);
+            }
+        });
+
+        // Get message
+        JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
+
+        return (String) javascriptExecutor.executeScript("return document.getElementById('message').value");
+    }
+
     @Test
     public void testChrome() throws Exception {
         webDriver = getChromeDriver();
@@ -213,7 +233,8 @@ public class SeleniumTest {
 
         HttpResponse httpResponse = pushService.send(notification);
 
-        assert (httpResponse.getStatusLine().getStatusCode() == 201);
+        Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
+        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
     @Test
@@ -237,7 +258,8 @@ public class SeleniumTest {
 
         HttpResponse httpResponse = pushService.send(notification);
 
-        assert (httpResponse.getStatusLine().getStatusCode() == 201);
+        Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
+        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
     @Test
@@ -261,7 +283,8 @@ public class SeleniumTest {
 
         HttpResponse httpResponse = pushService.send(notification);
 
-        assert (httpResponse.getStatusLine().getStatusCode() == 201);
+        Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
+        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
     @Test
@@ -280,7 +303,8 @@ public class SeleniumTest {
 
         HttpResponse httpResponse = pushService.send(notification);
 
-        assert (httpResponse.getStatusLine().getStatusCode() == 201);
+        Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
+        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
     /**
@@ -330,18 +354,11 @@ public class SeleniumTest {
      * @return
      */
     private String getPayload() {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.append("title", "Hello");
-        jsonObject.append("message", "World");
-
-        return jsonObject.toString();
+        return "Hello, world!";
     }
 
     @After
     public void tearDown() throws InterruptedException {
-        // Leave the browser open, so we actually see the notification arriving. Should be automated at some point..
-        Thread.sleep(5000);
-
         if (webDriver != null) {
             webDriver.quit();
         }
