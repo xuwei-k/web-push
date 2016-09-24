@@ -60,6 +60,16 @@ public class SeleniumTest {
     private static String REMOTE_DRIVER_URL = "http://" + USERNAME + ":" + ACCESS_KEY + "@localhost:4445/wd/hub";
 
     /**
+     * Time to wait for arrival of the push message
+     */
+    private static long GET_MESSAGE_TIMEOUT = 120L;
+
+    /**
+     * Time to wait while registering the subscription
+     */
+    private static long GET_SUBSCRIPTION_TIMEOUT = 20L;
+
+    /**
      * BaseEncoding service
      */
     private static BaseEncoding base64Url = BaseEncoding.base64Url();
@@ -166,7 +176,7 @@ public class SeleniumTest {
      */
     private String[] getSubscription(WebDriver webDriver) throws Exception {
         // Wait until the subscription is set
-        (new WebDriverWait(webDriver, 20L)).until(new Predicate<WebDriver>() {
+        (new WebDriverWait(webDriver, GET_SUBSCRIPTION_TIMEOUT)).until(new Predicate<WebDriver>() {
             @Override
             public boolean apply(WebDriver webDriver) {
                 return ((JavascriptExecutor) webDriver)
@@ -201,7 +211,7 @@ public class SeleniumTest {
      */
     private String getMessage(WebDriver webDriver) throws Exception {
         // Wait until the message is set
-        (new WebDriverWait(webDriver, 30L)).until(new Predicate<WebDriver>() {
+        (new WebDriverWait(webDriver, GET_MESSAGE_TIMEOUT)).until(new Predicate<WebDriver>() {
             @Override
             public boolean apply(WebDriver webDriver) {
                 return ((JavascriptExecutor) webDriver)
