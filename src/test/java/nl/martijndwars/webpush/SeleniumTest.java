@@ -83,7 +83,7 @@ public class SeleniumTest {
 
 
     @BeforeClass
-    public static void addSecurityProvider() throws Exception {
+    public static void beforeClass() throws Exception {
         // Set the BouncyCastle provider for cryptographic operations
         Security.addProvider(new BouncyCastleProvider());
 
@@ -244,11 +244,7 @@ public class SeleniumTest {
         HttpResponse httpResponse = pushService.send(notification);
 
         Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
-
-        // This does not work on CI/Saucylabs, not sure why
-        if (!isCI()) {
-            Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
-        }
+        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
     @Test
@@ -302,11 +298,7 @@ public class SeleniumTest {
         HttpResponse httpResponse = pushService.send(notification);
 
         Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
-
-        // This does not work on CI/Saucylabs, not sure why
-        if (!isCI()) {
-            Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
-        }
+        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
     @Test
@@ -326,11 +318,7 @@ public class SeleniumTest {
         HttpResponse httpResponse = pushService.send(notification);
 
         Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
-
-        // This does not work on CI/Saucylabs, not sure why
-        if (!isCI()) {
-            Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
-        }
+        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
     /**
