@@ -130,7 +130,7 @@ public class PushService {
             jws.setKey(privateKey);
             jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
 
-            headers.put("Authorization", "Bearer " + jws.getCompactSerialization());
+            headers.put("Authorization", "WebPush " + jws.getCompactSerialization());
 
             byte[] pk = Utils.savePublicKey((ECPublicKey) publicKey);
 
