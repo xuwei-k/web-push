@@ -7,6 +7,10 @@ import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 
 public class DemoServer {
+    public static void main(String[] args) throws Exception {
+        new DemoServer(8000);
+    }
+
     public DemoServer(int port) throws Exception {
         Server server = new Server(port);
 

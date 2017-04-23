@@ -1,7 +1,7 @@
 package nl.martijndwars.webpush;
 
-import com.google.common.base.Predicate;
 import com.google.common.io.BaseEncoding;
+import com.google.gson.Gson;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import org.apache.http.HttpResponse;
@@ -10,7 +10,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.json.JSONObject;
 import org.junit.*;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -22,7 +21,6 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -141,16 +139,8 @@ public class SeleniumTest {
      * @throws MalformedURLException
      */
     private WebDriver getFireFoxDriver() throws URISyntaxException, MalformedURLException {
-        // This doesn't work in FireFox 48, so we include a full profile that allows notifications on localhost:8081 instead (see below)
-        //FirefoxProfile firefoxProfile = new FirefoxProfile();
-        //firefoxProfile.setPreference("notification.prompt.testing", false);
-        //firefoxProfile.setPreference("notification.prompt.testing.allow", true);
-
-        // On my machine, I can use the profile in /Application Support/FireFox/Profiles
-        //FirefoxProfile firefoxProfile = new ProfilesIni().getProfile("selenium");
-
-        // But for others, we ship the full profile as a resource..
-        FirefoxProfile firefoxProfile = new FirefoxProfile(new File(this.getClass().getClassLoader().getResource("firefox").toURI()));
+        FirefoxProfile firefoxProfile = new FirefoxProfile();
+        firefoxProfile.setPreference("dom.push.testing.ignorePermission", true);
 
         DesiredCapabilities desiredCapabilities = DesiredCapabilities.firefox();
         desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
@@ -158,7 +148,7 @@ public class SeleniumTest {
         if (isCI()) {
             desiredCapabilities.setCapability("tunnel-identifier", System.getenv("TRAVIS_JOB_NUMBER"));
             desiredCapabilities.setCapability("name", "Travis #" + System.getenv("TRAVIS_JOB_NUMBER"));
-            desiredCapabilities.setCapability("version", "48.0");
+            desiredCapabilities.setCapability("version", "52.0");
             desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
             desiredCapabilities.setCapability("tags", System.getenv("CI"));
 
@@ -174,16 +164,10 @@ public class SeleniumTest {
      * @param webDriver
      * @throws Exception
      */
-    private String[] getSubscription(WebDriver webDriver) throws Exception {
+    private Subscription getSubscription(WebDriver webDriver) throws Exception {
         // Wait until the subscription is set
-        (new WebDriverWait(webDriver, GET_SUBSCRIPTION_TIMEOUT)).until(new Predicate<WebDriver>() {
-            @Override
-            public boolean apply(WebDriver webDriver) {
-                return ((JavascriptExecutor) webDriver)
-                    .executeScript("return document.getElementById('subscription').value != ''")
-                    .equals(true);
-            }
-        });
+        WebDriverWait webDriverWait = new WebDriverWait(webDriver, GET_SUBSCRIPTION_TIMEOUT);
+        webDriverWait.until(ExpectedConditions.hasSubscription());
 
         // Get subscription
         JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
@@ -191,16 +175,7 @@ public class SeleniumTest {
         String subscriptionJson = (String) javascriptExecutor.executeScript("return document.getElementById('subscription').value");
 
         // Extract data from JSON string
-        JSONObject subscription = new JSONObject(subscriptionJson);
-        String endpoint = subscription.getString("endpoint");
-        String userAuthBase64 = subscription.getJSONObject("keys").getString("auth");
-        String userPublicKeyBase64 = subscription.getJSONObject("keys").getString("p256dh");
-
-        return new String[]{
-            endpoint,
-            userAuthBase64,
-            userPublicKeyBase64
-        };
+        return new Gson().fromJson(subscriptionJson, Subscription.class);
     }
 
     /**
@@ -211,14 +186,8 @@ public class SeleniumTest {
      */
     private String getMessage(WebDriver webDriver) throws Exception {
         // Wait until the message is set
-        (new WebDriverWait(webDriver, GET_MESSAGE_TIMEOUT)).until(new Predicate<WebDriver>() {
-            @Override
-            public boolean apply(WebDriver webDriver) {
-                return ((JavascriptExecutor) webDriver)
-                    .executeScript("return document.getElementById('message').value != ''")
-                    .equals(true);
-            }
-        });
+        WebDriverWait webDriverWait = new WebDriverWait(webDriver, GET_MESSAGE_TIMEOUT);
+        webDriverWait.until(ExpectedConditions.hasMessage());
 
         // Get message
         JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
@@ -231,12 +200,8 @@ public class SeleniumTest {
         webDriver = getChromeDriver();
         webDriver.get(SERVER_URL);
 
-        String[] subscription = getSubscription(webDriver);
-        String endpoint = subscription[0];
-        String userAuthBase64 = subscription[1];
-        String userPublicKeyBase64 = subscription[2];
-
-        Notification notification = new Notification(endpoint, userPublicKeyBase64, userAuthBase64, getPayload());
+        Subscription subscription = getSubscription(webDriver);
+        Notification notification = createNotification(subscription);
 
         PushService pushService = new PushService();
         pushService.setGcmApiKey("AIzaSyDSa2bw0b0UGOmkZRw-dqHGQRI_JqpiHug");
@@ -254,12 +219,8 @@ public class SeleniumTest {
         webDriver = getChromeDriver();
         webDriver.get(SERVER_URL + "?vapid");
 
-        String[] subscription = getSubscription(webDriver);
-        String endpoint = subscription[0];
-        String userAuthBase64 = subscription[1];
-        String userPublicKeyBase64 = subscription[2];
-
-        Notification notification = new Notification(endpoint, userPublicKeyBase64, userAuthBase64, getPayload());
+        Subscription subscription = getSubscription(webDriver);
+        Notification notification = createNotification(subscription);
 
         PushService pushService = new PushService();
         pushService.setPublicKey(keyPair.getPublic());
@@ -283,12 +244,8 @@ public class SeleniumTest {
         webDriver = getFireFoxDriver();
         webDriver.get(SERVER_URL + "?vapid");
 
-        String[] subscription = getSubscription(webDriver);
-        String endpoint = subscription[0];
-        String userAuthBase64 = subscription[1];
-        String userPublicKeyBase64 = subscription[2];
-
-        Notification notification = new Notification(endpoint, userPublicKeyBase64, userAuthBase64, getPayload());
+        Subscription subscription = getSubscription(webDriver);
+        Notification notification = createNotification(subscription);
 
         PushService pushService = new PushService();
         pushService.setPublicKey(keyPair.getPublic());
@@ -297,7 +254,7 @@ public class SeleniumTest {
 
         HttpResponse httpResponse = pushService.send(notification);
 
-        Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
+        Assert.assertEquals("The endpoint accepts the push message", 201, httpResponse.getStatusLine().getStatusCode());
         Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
@@ -306,18 +263,14 @@ public class SeleniumTest {
         webDriver = getFireFoxDriver();
         webDriver.get(SERVER_URL);
 
-        String[] subscription = getSubscription(webDriver);
-        String endpoint = subscription[0];
-        String userAuthBase64 = subscription[1];
-        String userPublicKeyBase64 = subscription[2];
-
-        Notification notification = new Notification(endpoint, userPublicKeyBase64, userAuthBase64, getPayload());
+        Subscription subscription = getSubscription(webDriver);
+        Notification notification = createNotification(subscription);
 
         PushService pushService = new PushService();
 
         HttpResponse httpResponse = pushService.send(notification);
 
-        Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
+        Assert.assertEquals("The endpoint accepts the push message", 201, httpResponse.getStatusLine().getStatusCode());
         Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
     }
 
@@ -360,6 +313,21 @@ public class SeleniumTest {
      */
     private boolean isCI() {
         return Objects.equals(System.getenv("CI"), "true");
+    }
+
+    /**
+     * Create a notification from the given subscription.
+     *
+     * @param subscription
+     * @return
+     */
+    private Notification createNotification(Subscription subscription) throws GeneralSecurityException {
+        return new Notification(
+            subscription.endpoint,
+            subscription.keys.p256dh,
+            subscription.keys.auth,
+            getPayload()
+        );
     }
 
     /**
