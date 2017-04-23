@@ -93,6 +93,9 @@ dependencies {
     // For making HTTP requests
     compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.5.2'
 
+    // For making async HTTP requests
+    compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.3'
+
     // Not sure what for..
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
 

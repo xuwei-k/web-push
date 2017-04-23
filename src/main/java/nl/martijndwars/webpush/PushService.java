@@ -2,10 +2,10 @@ package nl.martijndwars.webpush;
 
 import com.google.common.io.BaseEncoding;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicHeader;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class PushService {
     /**
@@ -78,9 +80,30 @@ public class PushService {
     }
 
     /**
-     * Send a notification
+     * Send a notification and wait for the response.
+     *
+     * @param notification
+     * @return
+     * @throws GeneralSecurityException
+     * @throws IOException
+     * @throws JoseException
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
-    public HttpResponse send(Notification notification) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, NoSuchProviderException, InvalidAlgorithmParameterException, IOException, InvalidKeySpecException, JoseException {
+    public HttpResponse send(Notification notification) throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
+        return sendAsync(notification).get();
+    }
+
+    /**
+     * Send a notification, but don't wait for the response.
+     *
+     * @param notification
+     * @return
+     * @throws GeneralSecurityException
+     * @throws IOException
+     * @throws JoseException
+     */
+    public Future<HttpResponse> sendAsync(Notification notification) throws GeneralSecurityException, IOException, JoseException {
         BaseEncoding base64url = BaseEncoding.base64Url();
 
         Encrypted encrypted = encrypt(
@@ -92,8 +115,6 @@ public class PushService {
 
         byte[] dh = Utils.savePublicKey((ECPublicKey) encrypted.getPublicKey());
         byte[] salt = encrypted.getSalt();
-
-        HttpClient httpClient = HttpClients.createDefault();
 
         HttpPost httpPost = new HttpPost(notification.getEndpoint());
         httpPost.addHeader("TTL", String.valueOf(notification.getTTL()));
@@ -145,7 +166,10 @@ public class PushService {
             httpPost.addHeader(new BasicHeader(entry.getKey(), entry.getValue()));
         }
 
-        return httpClient.execute(httpPost);
+        final CloseableHttpAsyncClient closeableHttpAsyncClient = HttpAsyncClients.createDefault();
+        closeableHttpAsyncClient.start();
+
+        return closeableHttpAsyncClient.execute(httpPost, new ClosableCallback(closeableHttpAsyncClient));
     }
 
     /**
