@@ -1,15 +1,10 @@
 package nl.martijndwars.webpush;
 
-import com.google.common.io.BaseEncoding;
 import com.google.gson.Gson;
 import io.github.bonigarcia.wdm.ChromeDriverManager;
 import io.github.bonigarcia.wdm.MarionetteDriverManager;
 import org.apache.http.HttpResponse;
-import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.junit.*;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -21,8 +16,6 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -30,6 +23,7 @@ import java.security.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
 public class SeleniumTest {
     /**
@@ -66,18 +60,6 @@ public class SeleniumTest {
      * Time to wait while registering the subscription
      */
     private static long GET_SUBSCRIPTION_TIMEOUT = 20L;
-
-    /**
-     * BaseEncoding service
-     */
-    private static BaseEncoding base64Url = BaseEncoding.base64Url();
-
-    /**
-     * The WebDriver instance used for the test.
-     */
-    private WebDriver webDriver;
-
-    // TODO: List of drivers and that should be tested, i.e. FireFox with version x, Chrome with version y..
 
 
     @BeforeClass
@@ -117,7 +99,9 @@ public class SeleniumTest {
         desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
 
         if (isCI()) {
-            desiredCapabilities.setCapability("version", "52.0");
+            desiredCapabilities.setCapability("platform", "macOS 10.12");
+            desiredCapabilities.setCapability("version", "57.0");
+
             desiredCapabilities.setCapability("tunnel-identifier", System.getenv("TRAVIS_JOB_NUMBER"));
             desiredCapabilities.setCapability("name", "Travis #" + System.getenv("TRAVIS_JOB_NUMBER"));
             desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
@@ -146,9 +130,11 @@ public class SeleniumTest {
         desiredCapabilities.setCapability(FirefoxDriver.PROFILE, firefoxProfile);
 
         if (isCI()) {
+            desiredCapabilities.setCapability("platform", "macOS 10.12");
+            desiredCapabilities.setCapability("version", "52.0");
+
             desiredCapabilities.setCapability("tunnel-identifier", System.getenv("TRAVIS_JOB_NUMBER"));
             desiredCapabilities.setCapability("name", "Travis #" + System.getenv("TRAVIS_JOB_NUMBER"));
-            desiredCapabilities.setCapability("version", "52.0");
             desiredCapabilities.setCapability("build", System.getenv("TRAVIS_BUILD_NUMBER"));
             desiredCapabilities.setCapability("tags", System.getenv("CI"));
 
@@ -164,15 +150,13 @@ public class SeleniumTest {
      * @param webDriver
      * @throws Exception
      */
-    private Subscription getSubscription(WebDriver webDriver) throws Exception {
+    private Subscription getSubscription(WebDriver webDriver) {
         // Wait until the subscription is set
         WebDriverWait webDriverWait = new WebDriverWait(webDriver, GET_SUBSCRIPTION_TIMEOUT);
         webDriverWait.until(ExpectedConditions.hasSubscription());
 
         // Get subscription
-        JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
-
-        String subscriptionJson = (String) javascriptExecutor.executeScript("return document.getElementById('subscription').value");
+        String subscriptionJson = scrapeSubscription(webDriver);
 
         // Extract data from JSON string
         return new Gson().fromJson(subscriptionJson, Subscription.class);
@@ -184,135 +168,80 @@ public class SeleniumTest {
      * @param webDriver
      * @throws Exception
      */
-    private String getMessage(WebDriver webDriver) throws Exception {
+    private String getMessage(WebDriver webDriver) {
         // Wait until the message is set
         WebDriverWait webDriverWait = new WebDriverWait(webDriver, GET_MESSAGE_TIMEOUT);
         webDriverWait.until(ExpectedConditions.hasMessage());
 
         // Get message
-        JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
-
-        return (String) javascriptExecutor.executeScript("return document.getElementById('message').value");
+        return scrapeMessage(webDriver);
     }
 
-    @Test
-    public void testChrome() throws Exception {
-        webDriver = getChromeDriver();
-        webDriver.get(SERVER_URL);
+    /**
+     * Generic testing method that can be parametrized with a WebDriver, URL,
+     * PushService and function that performs assertions.
+     *
+     * @param webDriver
+     * @param URL
+     * @param pushService
+     * @param assertions
+     * @throws Exception
+     */
+    private void test(WebDriver webDriver, String URL, PushService pushService, BiConsumer<WebDriver, HttpResponse> assertions) throws Exception {
+        webDriver.get(URL);
 
         Subscription subscription = getSubscription(webDriver);
         Notification notification = createNotification(subscription);
-
-        PushService pushService = new PushService();
-        pushService.setGcmApiKey("AIzaSyDSa2bw0b0UGOmkZRw-dqHGQRI_JqpiHug");
-
         HttpResponse httpResponse = pushService.send(notification);
 
-        Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
-        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
+        assertions.accept(webDriver, httpResponse);
+
+        webDriver.quit();
+    }
+
+//    @Test
+    public void testChrome() throws Exception {
+        PushService pushService = new PushService();
+        pushService.setGcmApiKey("AAAA27DSsIg:APA91bGu9yaGBoOipiedYCQTVg-46SCo8hoHGvmP1_sPlsO0twEJ8mLGni29SUgq9Aus6yPW1ZyojY16spLtvyfxdKCXeTEuJ9a5HzsLIAZGdJJG7wonaKYDUtAfLjF5yeZG2s-3nC7k");
+
+        test(getChromeDriver(), SERVER_URL, pushService, (webDriver, httpResponse) -> {
+            Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
+            Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
+        });
     }
 
     @Test
     public void testChromeVapid() throws Exception {
-        KeyPair keyPair = readVapidKeys();
-
-        webDriver = getChromeDriver();
-        webDriver.get(SERVER_URL + "?vapid");
-
-        Subscription subscription = getSubscription(webDriver);
-        Notification notification = createNotification(subscription);
-
         PushService pushService = new PushService();
-        pushService.setPublicKey(keyPair.getPublic());
-        pushService.setPrivateKey(keyPair.getPrivate());
+        pushService.setKeyPair(TestUtils.readVapidKeys());
         pushService.setSubject("mailto:admin@domain.com");
 
-        HttpResponse httpResponse = pushService.send(notification);
-
-        Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
-
-        // This does not work on CI/Saucylabs, not sure why
-        if (!isCI()) {
+        test(getChromeDriver(), SERVER_URL + "?vapid", pushService, (webDriver, httpResponse) -> {
+            Assert.assertEquals("The endpoint accepts the push message", httpResponse.getStatusLine().getStatusCode(), 201);
             Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
-        }
+        });
     }
 
-    @Test
-    public void testFireFoxVapid() throws Exception {
-        KeyPair keyPair = readVapidKeys();
-
-        webDriver = getFireFoxDriver();
-        webDriver.get(SERVER_URL + "?vapid");
-
-        Subscription subscription = getSubscription(webDriver);
-        Notification notification = createNotification(subscription);
-
+//    @Test
+    public void testFireFox() throws Exception {
         PushService pushService = new PushService();
-        pushService.setPublicKey(keyPair.getPublic());
-        pushService.setPrivateKey(keyPair.getPrivate());
+
+        test(getFireFoxDriver(), SERVER_URL, pushService, (webDriver, httpResponse) -> {
+            Assert.assertEquals("The endpoint accepts the push message", 201, httpResponse.getStatusLine().getStatusCode());
+            Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
+        });
+    }
+
+//    @Test
+    public void testFireFoxVapid() throws Exception {
+        PushService pushService = new PushService();
+        pushService.setKeyPair(TestUtils.readVapidKeys());
         pushService.setSubject("mailto:admin@domain.com");
 
-        HttpResponse httpResponse = pushService.send(notification);
-
-        Assert.assertEquals("The endpoint accepts the push message", 201, httpResponse.getStatusLine().getStatusCode());
-        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
-    }
-
-    @Test
-    public void testFireFox() throws Exception {
-        webDriver = getFireFoxDriver();
-        webDriver.get(SERVER_URL);
-
-        Subscription subscription = getSubscription(webDriver);
-        Notification notification = createNotification(subscription);
-
-        PushService pushService = new PushService();
-
-        HttpResponse httpResponse = pushService.send(notification);
-
-        Assert.assertEquals("The endpoint accepts the push message", 201, httpResponse.getStatusLine().getStatusCode());
-        Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
-    }
-
-    /**
-     * Generate a public-private keypair on the prime256v1 curve.
-     *
-     * @return
-     * @throws NoSuchProviderException
-     * @throws NoSuchAlgorithmException
-     * @throws InvalidAlgorithmParameterException
-     */
-    private KeyPair generateVapidKeys() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC");
-        keyPairGenerator.initialize(ECNamedCurveTable.getParameterSpec("prime256v1"), new SecureRandom());
-
-        return keyPairGenerator.generateKeyPair();
-    }
-
-    /**
-     * Read the public-private key pair from vapid.pem and convert the
-     * BouncyCastle PEMKeyPair to a JCA KeyPair.
-     *
-     * @return
-     */
-    private KeyPair readVapidKeys() throws IOException {
-        try (InputStreamReader inputStreamReader = new InputStreamReader(getClass().getResourceAsStream("/vapid.pem"))) {
-            PEMParser pemParser = new PEMParser(inputStreamReader);
-            PEMKeyPair pemKeyPair = (PEMKeyPair) pemParser.readObject();
-
-            return new JcaPEMKeyConverter().getKeyPair(pemKeyPair);
-        } catch (IOException e) {
-            throw new IOException("The private key could not be decrypted", e);
-        }
-    }
-
-    /**
-     * Check if we are running as CI
-     *
-     * @return
-     */
-    private boolean isCI() {
-        return Objects.equals(System.getenv("CI"), "true");
+        test(getFireFoxDriver(), SERVER_URL + "?vapid", pushService, (webDriver, httpResponse) -> {
+            Assert.assertEquals("The endpoint accepts the push message", 201, httpResponse.getStatusLine().getStatusCode());
+            Assert.assertTrue("The browser receives the push message", getPayload().equals(getMessage(webDriver)));
+        });
     }
 
     /**
@@ -339,10 +268,36 @@ public class SeleniumTest {
         return "Hello, world!";
     }
 
-    @After
-    public void tearDown() throws InterruptedException {
-        if (webDriver != null) {
-            webDriver.quit();
-        }
+    /**
+     * Scrape the JSON subscription from the DOM.
+     *
+     * @param webDriver
+     * @return
+     */
+    private String scrapeSubscription(WebDriver webDriver) {
+        JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
+
+        return (String) javascriptExecutor.executeScript("return document.getElementById('subscription').value");
+    }
+
+    /**
+     * Scrape the message from the DOM.
+     *
+     * @param webDriver
+     * @return
+     */
+    private String scrapeMessage(WebDriver webDriver) {
+        JavascriptExecutor javascriptExecutor = ((JavascriptExecutor) webDriver);
+
+        return (String) javascriptExecutor.executeScript("return document.getElementById('message').value");
+    }
+
+    /**
+     * Check if we are running as CI
+     *
+     * @return
+     */
+    private boolean isCI() {
+        return Objects.equals(System.getenv("CI"), "true");
     }
 }

@@ -46,6 +46,19 @@ public class PushService {
      */
     private Key privateKey;
 
+    public PushService() {
+    }
+
+    public PushService(String gcmApiKey) {
+        this.gcmApiKey = gcmApiKey;
+    }
+
+    public PushService(KeyPair keyPair, String subject) {
+        this.publicKey = keyPair.getPublic();
+        this.privateKey = keyPair.getPrivate();
+        this.subject = subject;
+    }
+
     /**
      * Encrypt the payload using the user's public key using Elliptic Curve
      * Diffie Hellman cryptography over the prime256v1 curve.
@@ -192,6 +205,19 @@ public class PushService {
      */
     public PushService setSubject(String subject) {
         this.subject = subject;
+
+        return this;
+    }
+
+    /**
+     * Set the public and private key (for VAPID).
+     *
+     * @param keyPair
+     * @return
+     */
+    public PushService setKeyPair(KeyPair keyPair) {
+        setPublicKey(keyPair.getPublic());
+        setPrivateKey(keyPair.getPrivate());
 
         return this;
     }
