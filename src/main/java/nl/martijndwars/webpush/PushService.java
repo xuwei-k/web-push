@@ -59,6 +59,12 @@ public class PushService {
         this.subject = subject;
     }
 
+    public PushService(String publicKey, String privateKey, String subject) throws GeneralSecurityException {
+        this.publicKey = Utils.loadPublicKey(publicKey);
+        this.privateKey = Utils.loadPrivateKey(privateKey);
+        this.subject = subject;
+    }
+
     /**
      * Encrypt the payload using the user's public key using Elliptic Curve
      * Diffie Hellman cryptography over the prime256v1 curve.
@@ -66,7 +72,7 @@ public class PushService {
      * @return An Encrypted object containing the public key, salt, and
      * ciphertext, which can be sent to the other party.
      */
-    public static Encrypted encrypt(byte[] buffer, PublicKey userPublicKey, byte[] userAuth, int padSize) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException, InvalidKeySpecException, IOException {
+    public static Encrypted encrypt(byte[] buffer, PublicKey userPublicKey, byte[] userAuth, int padSize) throws GeneralSecurityException, IOException {
         ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec("prime256v1");
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDH", "BC");

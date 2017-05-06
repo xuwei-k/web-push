@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public class SeleniumTest {
+public class SauceTest {
     /**
      * Port of the server that serves the demo application.
      */

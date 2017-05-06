@@ -53,6 +53,10 @@ public class Notification {
         this(endpoint, Utils.loadPublicKey(userPublicKey), Utils.base64Decode(userAuth), payload.getBytes());
     }
 
+    public Notification(Subscription subscription, String payload) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
+        this(subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth, payload);
+    }
+
     public String getEndpoint() {
         return endpoint;
     }
