@@ -53,7 +53,19 @@ for detailed usage instructions. If you plan on using VAPID, read [doc/VAPID.md]
 
 ## Testing
 
-We have both unit tests and integration tests. The latter uses Selenium to automate web browser interaction. To run the tests:
+Our integration tests use Web Push Testing Service (WPTS) to automate browser interaction. To install WPTS:
+
+```
+npm install web-push-testing-service -g
+```
+
+Then, to start WPTS:
+
+```
+web-push-testing-service start wpts
+```
+
+Finally, to run all tests:
 
 ```
 ./gradlew test
