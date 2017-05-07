@@ -24,6 +24,30 @@ For Maven, add the following dependency to `pom.xml`:
 
 ## Usage
 
+First, create an instance of the push service:
+
+```
+pushService = new PushService(...);
+```
+
+Then, create a notification based on the user's subscription:
+
+```
+Notification notification = new Notification(...);
+```
+
+To send a push notification:
+
+```
+pushService.send(notification);
+```
+
+Use `sendAsync` instead of `send` to get a `Future<HttpResponse>`:
+
+```
+pushService.sendAsync(notification);
+```
+
 See [doc/UsageExample.md](https://github.com/MartijnDwars/web-push/blob/master/doc/UsageExample.md)
 for detailed usage instructions. If you plan on using VAPID, read [doc/VAPID.md](https://github.com/MartijnDwars/web-push/blob/master/doc/VAPID.md).
 
