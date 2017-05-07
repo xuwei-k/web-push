@@ -6,15 +6,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -121,40 +117,21 @@ public class TestingService {
      * @return
      */
     protected String request(String uri, HttpEntity entity) throws IOException {
-        return Request.Post(uri).body(entity).execute().handleResponse(new ResponseHandler<String>() {
-            @Override
-            public String handleResponse(HttpResponse httpResponse) throws IOException {
-                String json = EntityUtils.toString(httpResponse.getEntity());
+        return Request.Post(uri).body(entity).execute().handleResponse(httpResponse -> {
+            String json = EntityUtils.toString(httpResponse.getEntity());
 
-                if (httpResponse.getStatusLine().getStatusCode() != 200) {
-                    JsonElement root = new JsonParser().parse(json);
-                    JsonObject error = root.getAsJsonObject().get("error").getAsJsonObject();
+            if (httpResponse.getStatusLine().getStatusCode() != 200) {
+                JsonElement root = new JsonParser().parse(json);
+                JsonObject error = root.getAsJsonObject().get("error").getAsJsonObject();
 
-                    String errorId = error.get("id").getAsString();
-                    String errorMessage = error.get("message").getAsString();
+                String errorId = error.get("id").getAsString();
+                String errorMessage = error.get("message").getAsString();
 
-                    throw new IllegalStateException("Error " + errorId + ": " + errorMessage);
-                }
-
-                return json;
+                throw new IllegalStateException("Error " + errorId + ": " + errorMessage);
             }
+
+            return json;
         });
-
-        /*
-        Request request = Request.Post(uri).body(entity);
-
-        Response response = request.execute();
-
-        HttpResponse httpResponse = response.returnResponse();
-
-        String content = EntityUtils.toString(httpResponse.getEntity());
-
-        if (httpResponse.getStatusLine().getStatusCode() != 200) {
-            throw new IllegalStateException(content);
-        }
-
-        return content;
-        */
     }
 
     /**

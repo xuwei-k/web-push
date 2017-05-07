@@ -14,4 +14,13 @@ public class Configuration {
         this.version = version;
         this.publicKey = publicKey;
     }
+
+    public boolean isVapid() {
+        return !publicKey.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return browser + ", " + version + ", " + publicKey;
+    }
 }
