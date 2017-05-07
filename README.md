@@ -3,7 +3,6 @@
 A Web Push library for Java 7. Supports payloads and VAPID.
 
 [![Build Status](https://travis-ci.org/MartijnDwars/web-push.svg?branch=master)](https://travis-ci.org/MartijnDwars/web-push)
-[![Build Status](https://saucelabs.com/buildstatus/martijndwars)](https://saucelabs.com/beta/builds/a1930c691f6143beb5b74a34eb62f516)
 
 ## Installation
 
@@ -48,6 +47,5 @@ To give credit where credit is due, the PushService is mostly a Java port of mar
 ## Related
 
 - For PHP, see [Minishlink/web-push](https://github.com/Minishlink/web-push)
-- For nodejs, see [marco-c/web-push](https://github.com/marco-c/web-push) and [GoogleChrome/push-encryption-node](https://github.com/GoogleChrome/push-encryption-node)
-- For python, see [mozilla-services/pywebpush](https://github.com/mozilla-services/pywebpush)
-
+- For NodeJS, see [marco-c/web-push](https://github.com/marco-c/web-push) and [GoogleChrome/push-encryption-node](https://github.com/GoogleChrome/push-encryption-node)
+- For Python, see [mozilla-services/pywebpush](https://github.com/mozilla-services/pywebpush)

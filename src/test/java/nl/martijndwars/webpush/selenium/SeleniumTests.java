@@ -3,10 +3,7 @@ package nl.martijndwars.webpush.selenium;
 import com.google.common.io.BaseEncoding;
 import nl.martijndwars.webpush.PushService;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -36,6 +33,16 @@ public class SeleniumTests {
     }
 
     /**
+     * End the test suite.
+     *
+     * @throws IOException
+     */
+    @AfterAll
+    public static void tearDown() throws IOException {
+        testingService.endTestSuite(testSuiteId);
+    }
+
+    /**
      * Generate a stream of tests based on the configurations.
      *
      * @return
@@ -49,16 +56,6 @@ public class SeleniumTests {
 
             return dynamicTest(browserTest.getDisplayName(), browserTest);
         });
-    }
-
-    /**
-     * End the test suite.
-     *
-     * @throws IOException
-     */
-    @AfterAll
-    public static void tearDown() throws IOException {
-        testingService.endTestSuite(testSuiteId);
     }
 
     /**
