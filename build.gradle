@@ -144,9 +144,6 @@ dependencies {
     // For downloading and linking WebDriver's for various browsers
     testCompile group: 'io.github.bonigarcia', name: 'webdrivermanager', version: '1.4.9'
 
-    // For constructing JSON
-    testCompile group: 'org.json', name: 'json', version: '20160810'
-
     // For parsing JSON
     testCompile group: 'com.google.code.gson', name: 'gson', version: '2.8.0'
 }
