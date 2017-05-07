@@ -8,8 +8,9 @@ import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Subscription;
 import org.apache.http.HttpResponse;
-import org.junit.Assert;
 import org.junit.jupiter.api.function.Executable;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class BrowserTest implements Executable {
     private PushService pushService;
@@ -40,11 +41,11 @@ public class BrowserTest implements Executable {
         Notification notification = new Notification(subscription, "Hello, world");
 
         HttpResponse response = pushService.send(notification);
-        Assert.assertEquals(201, response.getStatusLine().getStatusCode());
+        assertEquals(201, response.getStatusLine().getStatusCode());
 
         JsonArray messages = testingService.getNotificationStatus(testSuiteId, testId);
-        Assert.assertEquals(1, messages.size());
-        Assert.assertEquals(new JsonPrimitive("Hello, world"), messages.get(0));
+        assertEquals(1, messages.size());
+        assertEquals(new JsonPrimitive("Hello, world"), messages.get(0));
     }
 
     /**

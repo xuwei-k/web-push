@@ -7,14 +7,14 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 
 public class PushServiceTest {
-    @BeforeClass
+    @BeforeAll
     public static void addSecurityProvider() {
         Security.addProvider(new BouncyCastleProvider());
     }
