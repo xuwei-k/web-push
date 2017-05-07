@@ -4,13 +4,29 @@ version '2.0.0'
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'org.junit.platform.gradle.plugin'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+compileJava {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+}
+
+compileTestJava {
+    sourceCompatibility = 1.8
+}
 
 jar {
     baseName = 'web-push'
     version = '2.0.0'
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
+    }
 }
 
 task javadocJar(type: Jar) {
@@ -86,12 +102,16 @@ uploadArchives {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
     // For making HTTP requests
     compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.5.2'
+
+    // For making async HTTP requests
+    compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.3'
 
     // Not sure what for..
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
@@ -102,25 +122,19 @@ dependencies {
     // For creating and signing JWT
     compile group: 'org.bitbucket.b_c', name: 'jose4j', version: '0.5.2'
 
-    
-    // For testing, obviously
-    testCompile group: 'junit', name: 'junit', version: '4.11'
 
-    // For parsing and unparsing JSON
-    testCompile group: 'org.json', name: 'json', version: '20160212'
+    // For testing, obviously
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.0.0-M4'
+
+    // For running JUnit tests
+    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.0.0-M4'
 
     // For turning InputStream to String
     testCompile group: 'commons-io', name: 'commons-io', version: '2.5'
 
-    // For running the demo web-app that is used for Selenium tests
-    testCompile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.0.M1'
+    // For parsing JSON
+    testCompile group: 'com.google.code.gson', name: 'gson', version: '2.8.0'
 
     // For reading the demo vapid keypair from a pem file
     testCompile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.55'
-
-    // For running Selenium tests
-    testCompile group: 'org.seleniumhq.selenium', name: 'selenium-server', version: '3.0.0-beta3'
-
-    // For downloading and linking WebDriver's for verious browsers
-    testCompile group: 'io.github.bonigarcia', name: 'webdrivermanager', version: '1.4.9'
 }

@@ -2,10 +2,10 @@ package nl.martijndwars.webpush;
 
 import com.google.common.io.BaseEncoding;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicHeader;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class PushService {
     /**
@@ -44,6 +46,25 @@ public class PushService {
      */
     private Key privateKey;
 
+    public PushService() {
+    }
+
+    public PushService(String gcmApiKey) {
+        this.gcmApiKey = gcmApiKey;
+    }
+
+    public PushService(KeyPair keyPair, String subject) {
+        this.publicKey = keyPair.getPublic();
+        this.privateKey = keyPair.getPrivate();
+        this.subject = subject;
+    }
+
+    public PushService(String publicKey, String privateKey, String subject) throws GeneralSecurityException {
+        this.publicKey = Utils.loadPublicKey(publicKey);
+        this.privateKey = Utils.loadPrivateKey(privateKey);
+        this.subject = subject;
+    }
+
     /**
      * Encrypt the payload using the user's public key using Elliptic Curve
      * Diffie Hellman cryptography over the prime256v1 curve.
@@ -51,7 +72,7 @@ public class PushService {
      * @return An Encrypted object containing the public key, salt, and
      * ciphertext, which can be sent to the other party.
      */
-    public static Encrypted encrypt(byte[] buffer, PublicKey userPublicKey, byte[] userAuth, int padSize) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException, InvalidKeySpecException, IOException {
+    public static Encrypted encrypt(byte[] buffer, PublicKey userPublicKey, byte[] userAuth, int padSize) throws GeneralSecurityException, IOException {
         ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec("prime256v1");
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDH", "BC");
@@ -78,9 +99,30 @@ public class PushService {
     }
 
     /**
-     * Send a notification
+     * Send a notification and wait for the response.
+     *
+     * @param notification
+     * @return
+     * @throws GeneralSecurityException
+     * @throws IOException
+     * @throws JoseException
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
-    public HttpResponse send(Notification notification) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, NoSuchProviderException, InvalidAlgorithmParameterException, IOException, InvalidKeySpecException, JoseException {
+    public HttpResponse send(Notification notification) throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
+        return sendAsync(notification).get();
+    }
+
+    /**
+     * Send a notification, but don't wait for the response.
+     *
+     * @param notification
+     * @return
+     * @throws GeneralSecurityException
+     * @throws IOException
+     * @throws JoseException
+     */
+    public Future<HttpResponse> sendAsync(Notification notification) throws GeneralSecurityException, IOException, JoseException {
         BaseEncoding base64url = BaseEncoding.base64Url();
 
         Encrypted encrypted = encrypt(
@@ -92,8 +134,6 @@ public class PushService {
 
         byte[] dh = Utils.savePublicKey((ECPublicKey) encrypted.getPublicKey());
         byte[] salt = encrypted.getSalt();
-
-        HttpClient httpClient = HttpClients.createDefault();
 
         HttpPost httpPost = new HttpPost(notification.getEndpoint());
         httpPost.addHeader("TTL", String.valueOf(notification.getTTL()));
@@ -130,7 +170,7 @@ public class PushService {
             jws.setKey(privateKey);
             jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
 
-            headers.put("Authorization", "Bearer " + jws.getCompactSerialization());
+            headers.put("Authorization", "WebPush " + jws.getCompactSerialization());
 
             byte[] pk = Utils.savePublicKey((ECPublicKey) publicKey);
 
@@ -145,7 +185,10 @@ public class PushService {
             httpPost.addHeader(new BasicHeader(entry.getKey(), entry.getValue()));
         }
 
-        return httpClient.execute(httpPost);
+        final CloseableHttpAsyncClient closeableHttpAsyncClient = HttpAsyncClients.createDefault();
+        closeableHttpAsyncClient.start();
+
+        return closeableHttpAsyncClient.execute(httpPost, new ClosableCallback(closeableHttpAsyncClient));
     }
 
     /**
@@ -168,6 +211,19 @@ public class PushService {
      */
     public PushService setSubject(String subject) {
         this.subject = subject;
+
+        return this;
+    }
+
+    /**
+     * Set the public and private key (for VAPID).
+     *
+     * @param keyPair
+     * @return
+     */
+    public PushService setKeyPair(KeyPair keyPair) {
+        setPublicKey(keyPair.getPublic());
+        setPrivateKey(keyPair.getPrivate());
 
         return this;
     }

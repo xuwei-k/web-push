@@ -1,31 +1,20 @@
 package nl.martijndwars.webpush;
 
-import com.google.common.base.Predicate;
-import io.github.bonigarcia.wdm.ChromeDriverManager;
-import io.github.bonigarcia.wdm.MarionetteDriverManager;
+import com.google.gson.JsonObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
-import org.json.JSONObject;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
 import java.security.Security;
 
 public class PushServiceTest {
-    @BeforeClass
+    @BeforeAll
     public static void addSecurityProvider() {
         Security.addProvider(new BouncyCastleProvider());
     }
@@ -152,9 +141,9 @@ public class PushServiceTest {
      * @return
      */
     private byte[] getPayload() {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.append("title", "Hello");
-        jsonObject.append("message", "World");
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("title", "Hello");
+        jsonObject.addProperty("message", "World");
 
         return jsonObject.toString().getBytes();
     }

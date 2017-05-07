@@ -3,11 +3,6 @@
 A Web Push library for Java 7. Supports payloads and VAPID.
 
 [![Build Status](https://travis-ci.org/MartijnDwars/web-push.svg?branch=master)](https://travis-ci.org/MartijnDwars/web-push)
-[![Build Status](https://saucelabs.com/buildstatus/martijndwars)](https://saucelabs.com/beta/builds/a1930c691f6143beb5b74a34eb62f516)
-
-## Browser Matrix
-
-[![Build Status](https://saucelabs.com/browser-matrix/martijndwars.svg)](https://saucelabs.com/beta/builds/a1930c691f6143beb5b74a34eb62f516)
 
 ## Installation
 
@@ -29,19 +24,64 @@ For Maven, add the following dependency to `pom.xml`:
 
 ## Usage
 
+First, create an instance of the push service:
+
+```
+pushService = new PushService(...);
+```
+
+Then, create a notification based on the user's subscription:
+
+```
+Notification notification = new Notification(...);
+```
+
+To send a push notification:
+
+```
+pushService.send(notification);
+```
+
+Use `sendAsync` instead of `send` to get a `Future<HttpResponse>`:
+
+```
+pushService.sendAsync(notification);
+```
+
 See [doc/UsageExample.md](https://github.com/MartijnDwars/web-push/blob/master/doc/UsageExample.md)
 for detailed usage instructions. If you plan on using VAPID, read [doc/VAPID.md](https://github.com/MartijnDwars/web-push/blob/master/doc/VAPID.md).
 
 ## Testing
 
-We use Selenium to interact with a browser.
+Our integration tests use Web Push Testing Service (WPTS) to automate browser interaction. To install WPTS:
+
+```
+npm install web-push-testing-service -g
+```
+
+Then, to start WPTS:
+
+```
+web-push-testing-service start wpts
+```
+
+Finally, to run all tests:
+
+```
+./gradlew test
+```
 
 ## Credit
 
 To give credit where credit is due, the PushService is mostly a Java port of marco-c/web-push. The HttpEce class is mostly a Java port of martinthomson/encrypted-content-encoding.
 
+## Documentation
+
+- [Generic Event Delivery Using HTTP Push](https://tools.ietf.org/html/draft-ietf-webpush-protocol-11)
+- [Voluntary Application Server Identification for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01)
+
 ## Related
 
 - For PHP, see [Minishlink/web-push](https://github.com/Minishlink/web-push)
-- For nodejs, see [marco-c/web-push](https://github.com/marco-c/web-push) and [GoogleChrome/push-encryption-node](https://github.com/GoogleChrome/push-encryption-node)
-- For python, see [mozilla-services/pywebpush](https://github.com/mozilla-services/pywebpush)
+- For NodeJS, see [marco-c/web-push](https://github.com/marco-c/web-push) and [GoogleChrome/push-encryption-node](https://github.com/GoogleChrome/push-encryption-node)
+- For Python, see [mozilla-services/pywebpush](https://github.com/mozilla-services/pywebpush)
