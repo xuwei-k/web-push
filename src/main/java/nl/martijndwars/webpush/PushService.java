@@ -15,9 +15,6 @@ import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.lang.JoseException;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -66,7 +63,7 @@ public class PushService {
     }
 
     /**
-     * Encrypt the payload using the user's public key using Elliptic Curve
+     * Encrypt the getPayload using the user's public key using Elliptic Curve
      * Diffie Hellman cryptography over the prime256v1 curve.
      *
      * @return An Encrypted object containing the public key, salt, and
@@ -229,6 +226,18 @@ public class PushService {
     }
 
     /**
+     * Set the public key using a base64url-encoded string.
+     *
+     * @param publicKey
+     * @return
+     */
+    public PushService setPublicKey(String publicKey) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
+        setPublicKey(Utils.loadPublicKey(publicKey));
+
+        return this;
+    }
+
+    /**
      * Set the public key (for VAPID)
      *
      * @param publicKey
@@ -236,6 +245,18 @@ public class PushService {
      */
     public PushService setPublicKey(PublicKey publicKey) {
         this.publicKey = publicKey;
+
+        return this;
+    }
+
+    /**
+     * Set the public key using a base64url-encoded string.
+     *
+     * @param privateKey
+     * @return
+     */
+    public PushService setPrivateKey(String privateKey) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
+        setPrivateKey(Utils.loadPrivateKey(privateKey));
 
         return this;
     }
