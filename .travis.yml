@@ -18,5 +18,5 @@ before_script:
 
 script:
   - web-push-testing-service start wpts
-  - ./gradlew check
+  - ./gradlew test
   - web-push-testing-service stop wpts
