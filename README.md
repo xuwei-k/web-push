@@ -2,7 +2,7 @@
 
 A Web Push library for Java 7. Supports payloads and VAPID.
 
-[![Build Status](https://travis-ci.org/MartijnDwars/web-push.svg?branch=master)](https://travis-ci.org/MartijnDwars/web-push)
+[![Build Status](https://travis-ci.org/web-push-libs/webpush-java.svg?branch=master)](https://travis-ci.org/web-push-libs/webpush-java)
 
 ## Installation
 
@@ -107,8 +107,8 @@ Use `sendAsync` instead of `send` to get a `Future<HttpResponse>`:
 pushService.sendAsync(notification);
 ```
 
-See [doc/UsageExample.md](https://github.com/MartijnDwars/web-push/blob/master/doc/UsageExample.md)
-for detailed usage instructions. If you plan on using VAPID, read [doc/VAPID.md](https://github.com/MartijnDwars/web-push/blob/master/doc/VAPID.md).
+See [doc/UsageExample.md](https://github.com/web-push-libs/webpush-java/blob/master/doc/UsageExample.md)
+for detailed usage instructions. If you plan on using VAPID, read [doc/VAPID.md](https://github.com/web-push-libs/webpush-java/blob/master/doc/VAPID.md).
 
 ## Testing
 
@@ -141,6 +141,6 @@ To give credit where credit is due, the PushService is mostly a Java port of mar
 
 ## Related
 
-- For PHP, see [Minishlink/web-push](https://github.com/Minishlink/web-push)
-- For NodeJS, see [marco-c/web-push](https://github.com/marco-c/web-push) and [GoogleChrome/push-encryption-node](https://github.com/GoogleChrome/push-encryption-node)
-- For Python, see [mozilla-services/pywebpush](https://github.com/mozilla-services/pywebpush)
+- For PHP, see [web-push-libs/web-push-php](https://github.com/web-push-libs/web-push-php)
+- For NodeJS, see [web-push-libs/web-push](https://github.com/web-push-libs/web-push)
+- For Python, see [web-push-libs/pywebpush](https://github.com/web-push-libs/pywebpush)
