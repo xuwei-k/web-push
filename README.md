@@ -130,6 +130,16 @@ Finally, to run all tests:
 ./gradlew test
 ```
 
+## FAQ
+
+### Why does encryption take multiple seconds?
+
+There may not be enough entropy to generate a random seed, which is common on headless servers. There exist two ways to overcome this problem:
+
+- Install [haveged](http://stackoverflow.com/a/31208558/368220), a _"random number generator that remedies low-entropy conditions in the Linux random device that can occur under some workloads, especially on headless servers."_ [This](https://www.digitalocean.com/community/tutorials/how-to-setup-additional-entropy-for-cloud-servers-using-haveged) tutorial explains how to install haveged on different Linux distributions.
+
+- Change the source for random number generation in the JVM from `/dev/random` to `/dev/urandom`. [This](https://docs.oracle.com/cd/E13209_01/wlcp/wlss30/configwlss/jvmrand.html) page offers some explanation.
+
 ## Credit
 
 To give credit where credit is due, the PushService is mostly a Java port of marco-c/web-push. The HttpEce class is mostly a Java port of martinthomson/encrypted-content-encoding.
