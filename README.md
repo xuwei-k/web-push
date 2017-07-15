@@ -22,6 +22,8 @@ For Maven, add the following dependency to `pom.xml`:
 </dependency>
 ```
 
+This library depends on BouncyCastle, which acts as a Java Cryptography Extension (JCE) provider. BouncyCastle's JARs are signed, and depending on how you package your application, you may need to include BouncyCastle yourself as well.
+
 ## Building
 
 To build the project yourself, clone this repository and build a run:
@@ -58,6 +60,9 @@ Usage: <main class> [command] [command options]
           --payload
             The message to send.
             Default: Hello, world!
+          --ttl
+            The number of seconds that the push service should retain the message.
+
 ```
 
 For example, to generate a keypair and output the keys in base64url encoding:
@@ -77,7 +82,7 @@ Use the public key in the call to `pushManager.subscribe` to get a subscription.
 $ java -jar build/libs/web-push-3.0.0-all.jar send-notification \
   --subscription="{'endpoint':'https://fcm.googleapis.com/fcm/send/fH-M3xRoLms:APA91bGB0rkNdxTFsXaJGyyyY7LtEmtHJXy8EqW48zSssxDXXACWCvc9eXjBVU54nrBkARTj4Xvl303PoNc0_rwAMrY9dvkQzi9fkaKLP0vlwoB0uqKygPeL77Y19VYHbj_v_FolUlHa','keys':{'p256dh':'BOtBVgsHVWXzwhDAoFE8P2IgQvabz_tuJjIlNacmS3XZ3fRDuVWiBp8bPR3vHCA78edquclcXXYb-olcj3QtIZ4=','auth':'IOScBh9LW5mJ_K2JwXyNqQ=='}}" \
   --publicKey="BGgL7I82SAQM78oyGwaJdrQFhVfZqL9h4Y18BLtgJQ-9pSGXwxqAWQudqmcv41RcWgk1ssUeItv4-8khxbhYveM=" \
-  --privateKey="ANlfcVVFB4JiMYcI74_h9h04QZ1Ks96AyEa1yrMgDwn3"
+  --privateKey="ANlfcVVFB4JiMYcI74_h9h04QZ1Ks96AyEa1yrMgDwn3" \
   --payload="Hello, lovely world!"
 ```
 
@@ -146,13 +151,17 @@ There may not be enough entropy to generate a random seed, which is common on he
 
 To give credit where credit is due, the PushService is mostly a Java port of marco-c/web-push. The HttpEce class is mostly a Java port of martinthomson/encrypted-content-encoding.
 
-## Documentation
+## Resources
 
 - [Generic Event Delivery Using HTTP Push](https://tools.ietf.org/html/draft-ietf-webpush-protocol-11)
 - [Voluntary Application Server Identification for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01)
+- [Web Push Book](https://web-push-book.gauntface.com/)
+- [Web Push: Data Encryption Test Page](https://jrconlin.github.io/WebPushDataTestPage/)
+- [Push Companion](https://web-push-codelab.appspot.com/)
 
 ## Related
 
 - For PHP, see [web-push-libs/web-push-php](https://github.com/web-push-libs/web-push-php)
 - For NodeJS, see [web-push-libs/web-push](https://github.com/web-push-libs/web-push)
 - For Python, see [web-push-libs/pywebpush](https://github.com/web-push-libs/pywebpush)
+
