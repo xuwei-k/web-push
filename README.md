@@ -38,7 +38,11 @@ To build a fat JAR in `build/libs` (e.g. to use the CLI):
 ./gradlew shadowJar
 ```
 
-## CLI
+## Usage
+
+This library is meant to be used as a Java API. However, it also exposes a CLI to easily generate a VAPID keypair and send a push notification.
+
+### CLI
 
 A command-line interface is available to easily generate a keypair (for VAPID) and to try sending a notification.
 
@@ -86,9 +90,11 @@ $ java -jar build/libs/web-push-3.0.0-all.jar send-notification \
   --payload="Hello, lovely world!"
 ```
 
+#### Proxy
+
 If you are behind a corporate proxy you may need to specify the proxy host. This library respects [Java's Network Properties](https://docs.oracle.com/javase/7/docs/api/java/net/doc-files/net-properties.html), which means that you can pass `https.proxyHost` and `http.proxyPort` when invoking `java`, e.g. `java -Dhttp.proxyHost=proxy.corp.com -Dhttp.proxyPort=80 -Dhttps.proxyHost=proxy.corp.com -Dhttps.proxyPort=443 -jar ...`.
 
-## API
+### API
 
 First, create an instance of the push service:
 
