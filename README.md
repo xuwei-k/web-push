@@ -81,6 +81,8 @@ $ java -jar build/libs/web-push-3.0.0-all.jar send-notification \
   --payload="Hello, lovely world!"
 ```
 
+If you are behind a corporate proxy you may need to specify the proxy host. This library respects [Java's Network Properties](https://docs.oracle.com/javase/7/docs/api/java/net/doc-files/net-properties.html), which means that you can pass `https.proxyHost` and `http.proxyPort` when invoking `java`, e.g. `java -Dhttp.proxyHost=proxy.corp.com -Dhttp.proxyPort=80 -Dhttps.proxyHost=proxy.corp.com -Dhttps.proxyPort=443 -jar ...`.
+
 ## API
 
 First, create an instance of the push service:

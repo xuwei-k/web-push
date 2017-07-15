@@ -182,7 +182,7 @@ public class PushService {
             httpPost.addHeader(new BasicHeader(entry.getKey(), entry.getValue()));
         }
 
-        final CloseableHttpAsyncClient closeableHttpAsyncClient = HttpAsyncClients.createDefault();
+        final CloseableHttpAsyncClient closeableHttpAsyncClient = HttpAsyncClients.createSystem();
         closeableHttpAsyncClient.start();
 
         return closeableHttpAsyncClient.execute(httpPost, new ClosableCallback(closeableHttpAsyncClient));
