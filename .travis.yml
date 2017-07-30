@@ -21,3 +21,7 @@ script:
   - web-push-testing-service start wpts
   - ./gradlew test
   - web-push-testing-service stop wpts
+
+env:
+  - JAVA_OPTS=-Dfile.encoding=cp1252
+  - JAVA_OPTS=-Dfile.encoding=UTF-8
