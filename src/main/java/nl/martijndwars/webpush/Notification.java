@@ -7,6 +7,8 @@ import java.security.NoSuchProviderException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class Notification {
     /**
      * The endpoint associated with the push subscription
@@ -50,7 +52,7 @@ public class Notification {
     }
 
     public Notification(String endpoint, String userPublicKey, String userAuth, String payload) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
-        this(endpoint, Utils.loadPublicKey(userPublicKey), Utils.base64Decode(userAuth), payload.getBytes());
+        this(endpoint, Utils.loadPublicKey(userPublicKey), Utils.base64Decode(userAuth), payload.getBytes(UTF_8));
     }
 
     public Notification(Subscription subscription, String payload) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {

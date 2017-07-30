@@ -11,8 +11,9 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.*;
-import java.util.Arrays;
 import java.util.Map;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * An implementation of HTTP ECE (Encrypted Content Encoding) as described in
@@ -36,12 +37,26 @@ public class HttpEce {
     protected static byte[] buildInfo(String type, byte[] context) {
         ByteBuffer buffer = ByteBuffer.allocate(19 + type.length() + context.length);
 
-        buffer.put("Content-Encoding: ".getBytes(), 0, 18);
-        buffer.put(type.getBytes(), 0, type.length());
+        buffer.put("Content-Encoding: ".getBytes(UTF_8), 0, 18);
+        buffer.put(type.getBytes(UTF_8), 0, type.length());
         buffer.put(new byte[1], 0, 1);
         buffer.put(context, 0, context.length);
 
         return buffer.array();
+    }
+
+    /**
+     * Convenience method for computing the HMAC Key Derivation Function. The
+     * real work is offloaded to BouncyCastle.
+     */
+    protected static byte[] hkdfExpand(byte[] ikm, byte[] salt, byte[] info, int length) throws InvalidKeyException, NoSuchAlgorithmException {
+        HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA256Digest());
+        hkdf.init(new HKDFParameters(ikm, salt, info));
+
+        byte[] okm = new byte[length];
+        hkdf.generateBytes(okm, 0, length);
+
+        return okm;
     }
 
     public byte[][] deriveKey(byte[] salt, byte[] key, String keyId, PublicKey dh, byte[] authSecret, int padSize) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException, NoSuchProviderException, IOException {
@@ -76,23 +91,9 @@ public class HttpEce {
         byte[] hkdf_nonce = hkdfExpand(secret, salt, nonceinfo, 12);
 
         return new byte[][]{
-            hkdf_key,
-            hkdf_nonce
+                hkdf_key,
+                hkdf_nonce
         };
-    }
-
-    /**
-     * Convenience method for computing the HMAC Key Derivation Function. The
-     * real work is offloaded to BouncyCastle.
-     */
-    protected static byte[] hkdfExpand(byte[] ikm, byte[] salt, byte[] info, int length) throws InvalidKeyException, NoSuchAlgorithmException {
-        HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA256Digest());
-        hkdf.init(new HKDFParameters(ikm, salt, info));
-
-        byte[] okm = new byte[length];
-        hkdf.generateBytes(okm, 0, length);
-
-        return okm;
     }
 
     /**
@@ -111,11 +112,11 @@ public class HttpEce {
         keyAgreement.doPhase(publicKey, true);
 
         byte[] secret = keyAgreement.generateSecret();
-        byte[] context = concat(labels.get(keyId).getBytes(), new byte[1], lengthPrefix(publicKey), lengthPrefix(senderPubKey));
+        byte[] context = concat(labels.get(keyId).getBytes(UTF_8), new byte[1], lengthPrefix(publicKey), lengthPrefix(senderPubKey));
 
         return new byte[][]{
-            secret,
-            context
+                secret,
+                context
         };
     }
 
