@@ -99,12 +99,12 @@ uploadArchives {
         name 'web-push'
         packaging 'jar'
         description 'A Web Push library for Java.'
-        url 'https://github.com/MartijnDwars/web-push'
+        url 'https://github.com/web-push-libs/web-push'
 
         scm {
-          connection 'scm:git:git@github.com:MartijnDwars/web-push.git'
-          developerConnection 'scm:git:git@github.com:MartijnDwars/web-push.git'
-          url 'git@github.com:MartijnDwars/web-push.git'
+          connection 'scm:git:git@github.com:web-push-libs/web-push.git'
+          developerConnection 'scm:git:git@github.com:web-push-libs/web-push.git'
+          url 'git@github.com:web-push-libs/web-push.git'
         }
 
         licenses {
