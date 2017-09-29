@@ -23,6 +23,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public class PushService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     /**
      * The Google Cloud Messaging API key (for pre-VAPID in Chrome)
      */
@@ -83,7 +86,8 @@ public class PushService {
         Map<String, String> labels = new HashMap<>();
         labels.put("server-key-id", "P-256");
 
-        byte[] salt = SecureRandom.getSeed(16);
+        byte[] salt = new byte[16];
+        SECURE_RANDOM.nextBytes( salt );
 
         HttpEce httpEce = new HttpEce(keys, labels);
         byte[] ciphertext = httpEce.encrypt(buffer, salt, null, "server-key-id", userPublicKey, userAuth, padSize);
