@@ -9,7 +9,7 @@ A Web Push library for Java 7. Supports payloads and VAPID.
 For Gradle, add the following dependency to `build.gradle`:
 
 ```
-compile group: 'nl.martijndwars', name: 'web-push', version: '3.0.0'
+compile group: 'nl.martijndwars', name: 'web-push', version: '3.0.1'
 ```
 
 For Maven, add the following dependency to `pom.xml`:
@@ -18,7 +18,7 @@ For Maven, add the following dependency to `pom.xml`:
 <dependency>
     <groupId>nl.martijndwars</groupId>
     <artifactId>web-push</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
 </dependency>
 ```
 
@@ -72,7 +72,7 @@ Usage: <main class> [command] [command options]
 For example, to generate a keypair and output the keys in base64url encoding:
 
 ```
-$ java -jar build/libs/web-push-3.0.0-all.jar generate-key
+$ java -jar build/libs/web-push-3.0.1-all.jar generate-key
 PublicKey:
 BGgL7I82SAQM78oyGwaJdrQFhVfZqL9h4Y18BLtgJQ-9pSGXwxqAWQudqmcv41RcWgk1ssUeItv4-8khxbhYveM=
 
@@ -83,7 +83,7 @@ ANlfcVVFB4JiMYcI74_h9h04QZ1Ks96AyEa1yrMgDwn3
 Use the public key in the call to `pushManager.subscribe` to get a subscription. Then, to send a notification:
 
 ```
-$ java -jar build/libs/web-push-3.0.0-all.jar send-notification \
+$ java -jar build/libs/web-push-3.0.1-all.jar send-notification \
   --subscription="{'endpoint':'https://fcm.googleapis.com/fcm/send/fH-M3xRoLms:APA91bGB0rkNdxTFsXaJGyyyY7LtEmtHJXy8EqW48zSssxDXXACWCvc9eXjBVU54nrBkARTj4Xvl303PoNc0_rwAMrY9dvkQzi9fkaKLP0vlwoB0uqKygPeL77Y19VYHbj_v_FolUlHa','keys':{'p256dh':'BOtBVgsHVWXzwhDAoFE8P2IgQvabz_tuJjIlNacmS3XZ3fRDuVWiBp8bPR3vHCA78edquclcXXYb-olcj3QtIZ4=','auth':'IOScBh9LW5mJ_K2JwXyNqQ=='}}" \
   --publicKey="BGgL7I82SAQM78oyGwaJdrQFhVfZqL9h4Y18BLtgJQ-9pSGXwxqAWQudqmcv41RcWgk1ssUeItv4-8khxbhYveM=" \
   --privateKey="ANlfcVVFB4JiMYcI74_h9h04QZ1Ks96AyEa1yrMgDwn3" \
@@ -159,7 +159,14 @@ To give credit where credit is due, the PushService is mostly a Java port of mar
 
 ## Resources
 
+### Specifications
+
 - [Generic Event Delivery Using HTTP Push](https://tools.ietf.org/html/draft-ietf-webpush-protocol-11)
+- [Message Encryption for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-encryption-08)
+- [Encrypted Content-Encoding for HTTP](https://tools.ietf.org/html/draft-ietf-httpbis-encryption-encoding-02)
+
+### Miscellaneous
+
 - [Voluntary Application Server Identification for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01)
 - [Web Push Book](https://web-push-book.gauntface.com/)
 - [Web Push: Data Encryption Test Page](https://jrconlin.github.io/WebPushDataTestPage/)
@@ -167,7 +174,11 @@ To give credit where credit is due, the PushService is mostly a Java port of mar
 
 ## Related
 
+The web-push-libs organization hosts implementations of the Web Push protocol in several languages:
+
 - For PHP, see [web-push-libs/web-push-php](https://github.com/web-push-libs/web-push-php)
 - For NodeJS, see [web-push-libs/web-push](https://github.com/web-push-libs/web-push)
 - For Python, see [web-push-libs/pywebpush](https://github.com/web-push-libs/pywebpush)
+- For C#, see [web-push-libs/web-push-csharp](https://github.com/web-push-libs/web-push-csharp)
+- For Scala, see [zivver/web-push](https://github.com/zivver/web-push)
 
