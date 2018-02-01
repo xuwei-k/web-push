@@ -10,8 +10,15 @@ import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.security.*;
+
+import static nl.martijndwars.webpush.Utils.ALGORITHM;
+import static nl.martijndwars.webpush.Utils.CURVE;
+import static org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME;
 
 public class GenerateKeyHandler implements HandlerInterface {
     private GenerateKeyCommand generateKeyCommand;
@@ -20,7 +27,8 @@ public class GenerateKeyHandler implements HandlerInterface {
         this.generateKeyCommand = generateKeyCommand;
     }
 
-    @Override public void run() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, IOException {
+    @Override
+    public void run() throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException, IOException {
         KeyPair keyPair = generateKeyPair();
 
         byte[] publicKey = Utils.savePublicKey((ECPublicKey) keyPair.getPublic());
@@ -45,10 +53,10 @@ public class GenerateKeyHandler implements HandlerInterface {
      * @throws NoSuchProviderException
      * @throws NoSuchAlgorithmException
      */
-    private KeyPair generateKeyPair() throws InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
-        ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec("prime256v1");
+    public KeyPair generateKeyPair() throws InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
+        ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec(CURVE);
 
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDH", "BC");
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER_NAME);
         keyPairGenerator.initialize(parameterSpec);
 
         return keyPairGenerator.generateKeyPair();

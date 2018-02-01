@@ -98,25 +98,25 @@ If you are behind a corporate proxy you may need to specify the proxy host. This
 
 First, create an instance of the push service:
 
-```
-pushService = new PushService(...);
+```java
+PushService pushService = new PushService(...);
 ```
 
 Then, create a notification based on the user's subscription:
 
-```
+```java
 Notification notification = new Notification(...);
 ```
 
 To send a push notification:
 
-```
+```java
 pushService.send(notification);
 ```
 
 Use `sendAsync` instead of `send` to get a `Future<HttpResponse>`:
 
-```
+```java
 pushService.sendAsync(notification);
 ```
 

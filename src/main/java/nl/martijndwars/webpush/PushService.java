@@ -10,6 +10,7 @@ import org.apache.http.message.BasicHeader;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.math.ec.ECPoint;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -17,13 +18,16 @@ import org.jose4j.lang.JoseException;
 
 import java.io.IOException;
 import java.security.*;
+import java.security.interfaces.ECPrivateKey;
 import java.security.spec.InvalidKeySpecException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class PushService {
+import static nl.martijndwars.webpush.Utils.CURVE;
 
+public class PushService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     /**
@@ -44,7 +48,7 @@ public class PushService {
     /**
      * The private key (for VAPID)
      */
-    private Key privateKey;
+    private PrivateKey privateKey;
 
     public PushService() {
     }
@@ -87,16 +91,16 @@ public class PushService {
         labels.put("server-key-id", "P-256");
 
         byte[] salt = new byte[16];
-        SECURE_RANDOM.nextBytes( salt );
+        SECURE_RANDOM.nextBytes(salt);
 
         HttpEce httpEce = new HttpEce(keys, labels);
         byte[] ciphertext = httpEce.encrypt(buffer, salt, null, "server-key-id", userPublicKey, userAuth, padSize);
 
         return new Encrypted.Builder()
-            .withSalt(salt)
-            .withPublicKey(serverKey.getPublic())
-            .withCiphertext(ciphertext)
-            .build();
+                .withSalt(salt)
+                .withPublicKey(serverKey.getPublic())
+                .withCiphertext(ciphertext)
+                .build();
     }
 
     /**
@@ -124,13 +128,15 @@ public class PushService {
      * @throws JoseException
      */
     public Future<HttpResponse> sendAsync(Notification notification) throws GeneralSecurityException, IOException, JoseException {
+        assert (verifyKeyPair());
+
         BaseEncoding base64url = BaseEncoding.base64Url();
 
         Encrypted encrypted = encrypt(
-            notification.getPayload(),
-            notification.getUserPublicKey(),
-            notification.getUserAuth(),
-            notification.getPadSize()
+                notification.getPayload(),
+                notification.getUserPublicKey(),
+                notification.getUserAuth(),
+                notification.getPadSize()
         );
 
         byte[] dh = Utils.savePublicKey((ECPublicKey) encrypted.getPublicKey());
@@ -161,7 +167,7 @@ public class PushService {
         if (vapidEnabled() && !notification.isGcm()) {
             JwtClaims claims = new JwtClaims();
             claims.setAudience(notification.getOrigin());
-            claims.setExpirationTimeMinutesInTheFuture(12*60);
+            claims.setExpirationTimeMinutesInTheFuture(12 * 60);
             claims.setSubject(subject);
 
             JsonWebSignature jws = new JsonWebSignature();
@@ -190,6 +196,14 @@ public class PushService {
         closeableHttpAsyncClient.start();
 
         return closeableHttpAsyncClient.execute(httpPost, new ClosableCallback(closeableHttpAsyncClient));
+    }
+
+    private boolean verifyKeyPair() {
+        ECNamedCurveParameterSpec curveParameters = ECNamedCurveTable.getParameterSpec(CURVE);
+        ECPoint g = curveParameters.getG();
+        ECPoint sG = g.multiply(((ECPrivateKey) privateKey).getS());
+
+        return sG.equals(((ECPublicKey) publicKey).getQ());
     }
 
     /**
@@ -229,6 +243,10 @@ public class PushService {
         return this;
     }
 
+    public PublicKey getPublicKey() {
+        return publicKey;
+    }
+
     /**
      * Set the public key using a base64url-encoded string.
      *
@@ -239,6 +257,14 @@ public class PushService {
         setPublicKey(Utils.loadPublicKey(publicKey));
 
         return this;
+    }
+
+    public PrivateKey getPrivateKey() {
+        return privateKey;
+    }
+
+    public KeyPair getKeyPair() {
+        return new KeyPair(publicKey, privateKey);
     }
 
     /**

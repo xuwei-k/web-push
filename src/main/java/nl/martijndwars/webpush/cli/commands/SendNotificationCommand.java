@@ -7,18 +7,20 @@ import nl.martijndwars.webpush.Subscription;
 
 @Parameters(separators = "=", commandDescription = "Send a push notification")
 public class SendNotificationCommand {
-
-    @Parameter(names = "--subscription", description = "A subscription in JSON format.")
+    @Parameter(names = "--subscription", description = "A subscription in JSON format.", required = true)
     private String subscription;
 
-    @Parameter(names = "--publicKey", description = "The public key as base64url encoded string.")
+    @Parameter(names = "--publicKey", description = "The public key as base64url encoded string.", required = true)
     private String publicKey;
 
-    @Parameter(names = "--privateKey", description = "The private key as base64url encoded string.")
+    @Parameter(names = "--privateKey", description = "The private key as base64url encoded string.", required = true)
     private String privateKey;
 
     @Parameter(names = "--payload", description = "The message to send.")
     private String payload = "Hello, world!";
+
+    @Parameter(names = "--ttl", description = "The number of seconds that the push service should retain the message.")
+    private int ttl;
 
     public Subscription getSubscription() {
         Gson gson = new Gson();
@@ -36,5 +38,9 @@ public class SendNotificationCommand {
 
     public String getPayload() {
         return payload;
+    }
+
+    public int getTtl() {
+        return ttl;
     }
 }
