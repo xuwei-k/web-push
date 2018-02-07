@@ -125,7 +125,7 @@ for detailed usage instructions. If you plan on using VAPID, read [doc/VAPID.md]
 
 ## Testing
 
-Our integration tests use Web Push Testing Service (WPTS) to automate browser interaction. To install WPTS:
+Our integration tests use [Web Push Testing Service (WPTS)](https://github.com/GoogleChromeLabs/web-push-testing-service) to handle the Selenium and browser orchestrating. To install WPTS:
 
 ```
 npm install web-push-testing-service -g

@@ -1,5 +1,6 @@
 package nl.martijndwars.webpush.selenium;
 
+import org.apache.commons.io.IOUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,6 +12,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Java wrapper for interacting with the Web Push Testing Service.
@@ -125,7 +127,9 @@ public class TestingService {
                 String errorId = error.get("id").getAsString();
                 String errorMessage = error.get("message").getAsString();
 
-                throw new IllegalStateException("Error " + errorId + ": " + errorMessage);
+                String body = IOUtils.toString(entity.getContent(), UTF_8);
+
+                throw new IllegalStateException("Error while requesting " + uri + " with body " + body + " (" + errorId + ": " + errorMessage);
             }
 
             return json;
