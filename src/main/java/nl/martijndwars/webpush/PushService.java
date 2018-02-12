@@ -128,6 +128,24 @@ public class PushService {
      * @throws JoseException
      */
     public Future<HttpResponse> sendAsync(Notification notification) throws GeneralSecurityException, IOException, JoseException {
+        HttpPost httpPost = preparePost(notification);
+
+        final CloseableHttpAsyncClient closeableHttpAsyncClient = HttpAsyncClients.createSystem();
+        closeableHttpAsyncClient.start();
+
+        return closeableHttpAsyncClient.execute(httpPost, new ClosableCallback(closeableHttpAsyncClient));
+    }
+
+    /**
+     * Prepare a HttpPost for Apache async http client
+     *
+     * @param notification
+     * @return
+     * @throws GeneralSecurityException
+     * @throws IOException
+     * @throws JoseException
+     */
+    public HttpPost preparePost(Notification notification) throws GeneralSecurityException, IOException, JoseException {
         assert (verifyKeyPair());
 
         BaseEncoding base64url = BaseEncoding.base64Url();
@@ -191,11 +209,7 @@ public class PushService {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             httpPost.addHeader(new BasicHeader(entry.getKey(), entry.getValue()));
         }
-
-        final CloseableHttpAsyncClient closeableHttpAsyncClient = HttpAsyncClients.createSystem();
-        closeableHttpAsyncClient.start();
-
-        return closeableHttpAsyncClient.execute(httpPost, new ClosableCallback(closeableHttpAsyncClient));
+        return httpPost;
     }
 
     private boolean verifyKeyPair() {
