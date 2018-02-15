@@ -8,13 +8,13 @@ A Web Push library for Java 7. Supports payloads and VAPID.
 
 For Gradle, add the following dependency to `build.gradle`:
 
-```
+```groovy
 compile group: 'nl.martijndwars', name: 'web-push', version: '3.0.2'
 ```
 
 For Maven, add the following dependency to `pom.xml`:
 
-```
+```xml
 <dependency>
     <groupId>nl.martijndwars</groupId>
     <artifactId>web-push</artifactId>
@@ -28,13 +28,13 @@ This library depends on BouncyCastle, which acts as a Java Cryptography Extensio
 
 To build the project yourself, clone this repository and build a run:
 
-```
+```sh
 ./gradlew assemble
 ```
 
 To build a fat JAR in `build/libs` (e.g. to use the CLI):
 
-```
+```sh
 ./gradlew shadowJar
 ```
 
@@ -96,7 +96,13 @@ If you are behind a corporate proxy you may need to specify the proxy host. This
 
 ### API
 
-First, create an instance of the push service:
+First, make sure you add the BouncyCastle security provider:
+
+```java
+Security.addProvider(new BouncyCastleProvider());
+```
+
+Then, create an instance of the push service:
 
 ```java
 PushService pushService = new PushService(...);
