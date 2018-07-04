@@ -168,8 +168,8 @@ public class PushService {
         if (notification.hasPayload()) {
             headers.put("Content-Type", "application/octet-stream");
             headers.put("Content-Encoding", "aesgcm");
-            headers.put("Encryption", "keyid=p256dh;salt=" + base64url.omitPadding().encode(salt));
-            headers.put("Crypto-Key", "keyid=p256dh;dh=" + base64url.encode(dh));
+            headers.put("Encryption", "salt=" + base64url.omitPadding().encode(salt));
+            headers.put("Crypto-Key", "dh=" + base64url.encode(dh));
 
             httpPost.setEntity(new ByteArrayEntity(encrypted.getCiphertext()));
         }
