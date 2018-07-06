@@ -13,7 +13,7 @@ plugins {
 }
 
 group 'nl.martijndwars'
-version '3.1.0'
+version '3.1.1'
 
 apply plugin: 'java'
 apply plugin: 'maven'
@@ -36,7 +36,7 @@ compileTestJava {
 
 jar {
     baseName = 'web-push'
-    version = '3.1.0'
+    version = '3.1.1'
 }
 
 shadowJar {
