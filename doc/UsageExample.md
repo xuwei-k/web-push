@@ -308,7 +308,7 @@ public void sendPushMessage(Subscription sub, byte[] payload) {
   Notification notification;
   PushService pushService;
 
-  if (useGcm) {
+  if (!useGcm) {
     // Create a notification with the endpoint, userPublicKey from the subscription and a custom payload
     notification = new Notification(
       sub.getEndpoint(),
