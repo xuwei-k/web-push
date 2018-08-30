@@ -3,6 +3,7 @@
 A Web Push library for Java 7. Supports payloads and VAPID.
 
 [![Build Status](https://travis-ci.org/web-push-libs/webpush-java.svg?branch=master)](https://travis-ci.org/web-push-libs/webpush-java)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/nl.martijndwars/web-push/badge.svg)](https://search.maven.org/search?q=g:nl.martijndwars%20AND%20a:web-push)
 
 ## Installation
 
