@@ -141,8 +141,8 @@ dependencies {
     // For making async HTTP requests
     compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.3'
 
-    // Not sure what for..
-    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+    // For Base64 encoding
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
 
     // For cryptographic operations
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.54'
@@ -164,4 +164,7 @@ dependencies {
 
     // For reading the demo vapid keypair from a pem file
     testCompile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.55'
+
+    // For verifying Base64Encoder results in unit tests
+    testCompile group: 'com.google.guava', name: 'guava', version: '19.0'
 }

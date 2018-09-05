@@ -1,6 +1,6 @@
 package nl.martijndwars.webpush.selenium;
 
-import com.google.common.io.BaseEncoding;
+import nl.martijndwars.webpush.Base64Encoder;
 import nl.martijndwars.webpush.PushService;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterAll;
@@ -64,10 +64,8 @@ public class SeleniumTests {
      * @return
      */
     protected Stream<Configuration> getConfigurations() {
-        BaseEncoding base64Encoding = BaseEncoding.base64();
-
-        String PUBLIC_KEY_NO_PADDING = base64Encoding.omitPadding().encode(
-                base64Encoding.decode(PUBLIC_KEY)
+        String PUBLIC_KEY_NO_PADDING = Base64Encoder.encodeWithoutPadding(
+                Base64Encoder.decode(PUBLIC_KEY)
         );
 
         return Stream.of(

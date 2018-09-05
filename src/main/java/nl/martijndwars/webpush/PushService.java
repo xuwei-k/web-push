@@ -1,6 +1,5 @@
 package nl.martijndwars.webpush;
 
-import com.google.common.io.BaseEncoding;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -148,7 +147,6 @@ public class PushService {
     public HttpPost preparePost(Notification notification) throws GeneralSecurityException, IOException, JoseException {
         assert (verifyKeyPair());
 
-        BaseEncoding base64url = BaseEncoding.base64Url();
 
         Encrypted encrypted = encrypt(
                 notification.getPayload(),
@@ -168,8 +166,8 @@ public class PushService {
         if (notification.hasPayload()) {
             headers.put("Content-Type", "application/octet-stream");
             headers.put("Content-Encoding", "aesgcm");
-            headers.put("Encryption", "salt=" + base64url.omitPadding().encode(salt));
-            headers.put("Crypto-Key", "dh=" + base64url.encode(dh));
+            headers.put("Encryption", "salt=" + Base64Encoder.encodeUrlWithoutPadding(salt));
+            headers.put("Crypto-Key", "dh=" + Base64Encoder.encodeUrl(dh));
 
             httpPost.setEntity(new ByteArrayEntity(encrypted.getCiphertext()));
         }
@@ -200,9 +198,9 @@ public class PushService {
             byte[] pk = Utils.savePublicKey((ECPublicKey) publicKey);
 
             if (headers.containsKey("Crypto-Key")) {
-                headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + base64url.omitPadding().encode(pk));
+                headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + Base64Encoder.encodeUrlWithoutPadding(pk));
             } else {
-                headers.put("Crypto-Key", "p256ecdsa=" + base64url.encode(pk));
+                headers.put("Crypto-Key", "p256ecdsa=" + Base64Encoder.encodeUrl(pk));
             }
         }
 
