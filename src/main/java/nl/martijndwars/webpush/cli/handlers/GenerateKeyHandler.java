@@ -1,6 +1,6 @@
 package nl.martijndwars.webpush.cli.handlers;
 
-import com.google.common.io.BaseEncoding;
+import nl.martijndwars.webpush.Base64Encoder;
 import nl.martijndwars.webpush.Utils;
 import nl.martijndwars.webpush.cli.commands.GenerateKeyCommand;
 import org.bouncycastle.jce.ECNamedCurveTable;
@@ -39,10 +39,10 @@ public class GenerateKeyHandler implements HandlerInterface {
         }
 
         System.out.println("PublicKey:");
-        System.out.println(BaseEncoding.base64Url().encode(publicKey));
+        System.out.println(Base64Encoder.encodeUrl(publicKey));
 
         System.out.println("PrivateKey:");
-        System.out.println(BaseEncoding.base64Url().encode(privateKey));
+        System.out.println(Base64Encoder.encodeUrl(privateKey));
     }
 
     /**
