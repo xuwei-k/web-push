@@ -1,5 +1,4 @@
 libraryDependencies ++= Seq(
-  "com.beust" % "jcommander" % "1.72",
   "com.google.code.gson" % "gson" % "2.8.0",
   "org.apache.httpcomponents" % "httpasyncclient" % "4.1.3",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.54",
