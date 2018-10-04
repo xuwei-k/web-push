@@ -20,7 +20,7 @@ before_script:
 
 script:
   - web-push-testing-service start wpts
-  - ./gradlew test
+  - sbt test
   - web-push-testing-service stop wpts
 
 env:
