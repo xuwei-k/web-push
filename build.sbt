@@ -1,4 +1,7 @@
 libraryDependencies ++= Seq(
+  "com.google.crypto.tink" % "apps-webpush" % "1.2.0",
+  "com.auth0" % "java-jwt" % "3.4.0",
+
   "com.google.code.gson" % "gson" % "2.8.0",
   "org.apache.httpcomponents" % "httpasyncclient" % "4.1.3",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.54",
