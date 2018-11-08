@@ -1,5 +1,6 @@
 package nl.martijndwars.webpush;
 
+import com.google.crypto.tink.apps.webpush.WebPushHybridEncrypt;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -75,31 +76,12 @@ public class PushService {
      * @return An Encrypted object containing the public key, salt, and
      * ciphertext, which can be sent to the other party.
      */
-    public static Encrypted encrypt(byte[] buffer, PublicKey userPublicKey, byte[] userAuth, int padSize) throws GeneralSecurityException, IOException {
-        ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec("prime256v1");
+    public static byte[] encrypt(byte[] buffer, PublicKey userPublicKey, byte[] userAuth) throws GeneralSecurityException, IOException {
+        WebPushHybridEncrypt aes128gcm = new WebPushHybridEncrypt.Builder().withAuthSecret(userAuth).withRecipientPublicKey((java.security.interfaces.ECPublicKey) userPublicKey).build();
 
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDH", "BC");
-        keyPairGenerator.initialize(parameterSpec);
-
-        KeyPair serverKey = keyPairGenerator.generateKeyPair();
-
-        Map<String, KeyPair> keys = new HashMap<>();
-        keys.put("server-key-id", serverKey);
-
-        Map<String, String> labels = new HashMap<>();
-        labels.put("server-key-id", "P-256");
-
-        byte[] salt = new byte[16];
-        SECURE_RANDOM.nextBytes(salt);
-
-        HttpEce httpEce = new HttpEce(keys, labels);
-        byte[] ciphertext = httpEce.encrypt(buffer, salt, null, "server-key-id", userPublicKey, userAuth, padSize);
-
-        return new Encrypted.Builder()
-                .withSalt(salt)
-                .withPublicKey(serverKey.getPublic())
-                .withCiphertext(ciphertext)
-                .build();
+        // contextInfo should be null
+        // https://github.com/google/tink/blob/v1.2.0/apps/webpush/src/main/java/com/google/crypto/tink/apps/webpush/WebPushHybridEncrypt.java#L186-L189
+        return aes128gcm.encrypt(buffer, null);
     }
 
     /**
@@ -148,15 +130,11 @@ public class PushService {
         assert (verifyKeyPair());
 
 
-        Encrypted encrypted = encrypt(
+        byte[] encrypted = encrypt(
                 notification.getPayload(),
                 notification.getUserPublicKey(),
-                notification.getUserAuth(),
-                notification.getPadSize()
+                notification.getUserAuth()
         );
-
-        byte[] dh = Utils.savePublicKey((ECPublicKey) encrypted.getPublicKey());
-        byte[] salt = encrypted.getSalt();
 
         HttpPost httpPost = new HttpPost(notification.getEndpoint());
         httpPost.addHeader("TTL", String.valueOf(notification.getTTL()));
@@ -165,11 +143,8 @@ public class PushService {
 
         if (notification.hasPayload()) {
             headers.put("Content-Type", "application/octet-stream");
-            headers.put("Content-Encoding", "aesgcm");
-            headers.put("Encryption", "salt=" + Base64Encoder.encodeUrlWithoutPadding(salt));
-            headers.put("Crypto-Key", "dh=" + Base64Encoder.encodeUrl(dh));
-
-            httpPost.setEntity(new ByteArrayEntity(encrypted.getCiphertext()));
+            headers.put("Content-Encoding", "aes128gcm");
+            httpPost.setEntity(new ByteArrayEntity(encrypted));
         }
 
         if (notification.isGcm()) {
@@ -193,9 +168,9 @@ public class PushService {
             jws.setKey(privateKey);
             jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
 
-            headers.put("Authorization", "WebPush " + jws.getCompactSerialization());
-
             byte[] pk = Utils.savePublicKey((ECPublicKey) publicKey);
+            String k = Base64Encoder.encodeUrlWithoutPadding(pk);
+            headers.put("Authorization", "vapid t=" + jws.getCompactSerialization() + ",k=" + k);
 
             if (headers.containsKey("Crypto-Key")) {
                 headers.put("Crypto-Key", headers.get("Crypto-Key") + ";p256ecdsa=" + Base64Encoder.encodeUrlWithoutPadding(pk));
